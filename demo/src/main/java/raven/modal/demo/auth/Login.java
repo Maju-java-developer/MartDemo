@@ -65,10 +65,8 @@ public class Login extends Form {
 
         panelLogin.putClientProperty(FlatClientProperties.STYLE, "" +
                 "[dark]background:tint($Panel.background,1%);");
-
         loginContent.putClientProperty(FlatClientProperties.STYLE, "" +
                 "background:null;");
-
         txtUsername.putClientProperty(FlatClientProperties.STYLE, "" +
                 "margin:4,10,4,10;" +
                 "arc:12;");
@@ -76,7 +74,6 @@ public class Login extends Form {
                 "margin:4,10,4,10;" +
                 "arc:12;" +
                 "showRevealButton:true;");
-
         cmdLogin.putClientProperty(FlatClientProperties.STYLE, "" +
                 "margin:4,10,4,10;" +
                 "arc:12;");
@@ -123,8 +120,7 @@ public class Login extends Form {
             // after success reset the username & password
             txtUsername.setText("");
             txtPassword.setText("");
-            ModelUser user = getUser(txtUsername.getText(), txtPassword.getText());
-            MyDrawerBuilder.getInstance().setUser(user);
+            MyDrawerBuilder.getInstance().setUser(userModel);
             FormManager.login();
         });
     }
@@ -153,10 +149,4 @@ public class Login extends Form {
         }
     }
 
-    private ModelUser getUser(String user, String password) {
-        if (user.equals("staff") && password.equals("123")) {
-            return new ModelUser("Justin White", "justinwhite@gmail.com", ModelUser.Role.STAFF);
-        }
-        return new ModelUser("Majid.Hussain", "majidhussain@gmail.com", ModelUser.Role.ADMIN);
-    }
 }

@@ -1,4 +1,4 @@
-package raven.modal.demo;
+package raven.modal.demo.utils;
 
 public class Constants {
     public final static String[] supplierColumns = {"#", "Vendor Name", "Contact No", "Email", "Address", "Remaining Balance", "Actions"};

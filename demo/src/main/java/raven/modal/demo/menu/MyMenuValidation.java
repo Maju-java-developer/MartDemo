@@ -45,15 +45,17 @@ public class MyMenuValidation extends MenuValidation {
         if (user.getRole() == ModelUser.Role.ADMIN) {
             return true;
         }
-
-        boolean status
-                // `Modal`
-                = checkMenu(index, new int[]{2, 0})
-                // `Components`->`Toast`
-                && checkMenu(index, new int[]{2, 1})
-                // `Forms`->`Responsive Layout`
-                && checkMenu(index, new int[]{1, 2});
-
-        return status;
+        // validation for if it's not admin.
+//        boolean status
+//                = checkMenu(index, new int[]{2})
+//                &&
+//                checkMenu(index, new int[]{2, 0})
+//                // `Components`->`Toast`
+//                && checkMenu(index, new int[]{2, 1})
+//                // `Forms`->`Responsive Layout`
+//                && checkMenu(index, new int[]{1, 2});
+//
+//        return status;
+        return true;
     }
 }

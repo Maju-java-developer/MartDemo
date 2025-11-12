@@ -2,7 +2,7 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.Constants;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.BrandDao;
 import raven.modal.demo.forms.FormBrand;
 import raven.modal.demo.system.Form;
