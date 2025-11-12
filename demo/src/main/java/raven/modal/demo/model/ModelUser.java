@@ -1,50 +1,48 @@
 package raven.modal.demo.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+
+@Data
+@Builder
+@AllArgsConstructor
 public class ModelUser {
-
-    public String getUserName() {
-        return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public String getMail() {
-        return mail;
-    }
-
-    public void setMail(String mail) {
-        this.mail = mail;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
+    private Integer userId;
+    private String fullName;
+    private String email;
+    private String contactNo;
 
     public ModelUser(String userName, String mail, Role role) {
         this.userName = userName;
-        this.mail = mail;
         this.role = role;
     }
 
     private String userName;
-    private String mail;
+    private String password;
     private Role role;
 
     public enum Role {
-        ADMIN, STAFF;
+        ADMIN, CASHIER, STAFF;
 
         @Override
         public String toString() {
-            if (this == ADMIN) {
-                return "Admin";
+            switch (this) {
+                case ADMIN: return "Admin";
+                case CASHIER: return "Cashier";
+                default: return super.toString();
             }
-            return "Staff";
+        }
+
+        // Converts string (from DB) to enum safely
+        public static Role fromString(String value) {
+            if (value == null) return null;
+            for (Role role : Role.values()) {
+                if (role.name().equalsIgnoreCase(value)) {
+                    return role;
+                }
+            }
+            throw new IllegalArgumentException("Unknown role: " + value);
         }
     }
 }

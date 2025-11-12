@@ -4,6 +4,7 @@ import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.component.DropShadowBorder;
 import raven.modal.demo.component.LabelButton;
+import raven.modal.demo.dao.UserDAO;
 import raven.modal.demo.menu.MyDrawerBuilder;
 import raven.modal.demo.model.ModelUser;
 import raven.modal.demo.system.Form;
@@ -50,6 +51,10 @@ public class Login extends Form {
         JButton cmdLogin = new JButton("Login") {
             @Override
             public boolean isDefaultButton() {
+                txtUsername.setText("Ali.Hassan");
+                txtPassword.setText("Hassan@12");
+//                txtUsername.setText("Majid.Hussain");
+//                txtPassword.setText("Majid@12");
                 return true;
             }
         };
@@ -92,7 +97,33 @@ public class Login extends Form {
         cmdLogin.addActionListener(e -> {
             String userName = txtUsername.getText();
             String password = String.valueOf(txtPassword.getPassword());
-            ModelUser user = getUser(userName, password);
+
+            System.out.println("Username: " + userName);
+            System.out.println("Password: " + password);
+            // Clear previous error state
+            txtUsername.putClientProperty(FlatClientProperties.OUTLINE, null);
+            txtPassword.putClientProperty(FlatClientProperties.OUTLINE, null);
+
+            if (userName.equals("") || password.equals("")) {
+                JOptionPane.showMessageDialog(null, "Please enter a valid username/password");
+                txtUsername.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+                txtPassword.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+                return;
+            }
+
+            ModelUser userModel = UserDAO.authenticateUser(userName, password);
+
+            if (userModel == null) {
+                JOptionPane.showMessageDialog(null, "Please enter a valid username/password");
+                txtUsername.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+                txtPassword.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
+                return;
+            }
+
+            // after success reset the username & password
+            txtUsername.setText("");
+            txtPassword.setText("");
+            ModelUser user = getUser(txtUsername.getText(), txtPassword.getText());
             MyDrawerBuilder.getInstance().setUser(user);
             FormManager.login();
         });
@@ -105,7 +136,7 @@ public class Login extends Form {
 
         panelInfo.add(new JLabel("Don't remember your account details?"));
         panelInfo.add(new JLabel("Contact us at"), "split 2");
-        LabelButton lbLink = new LabelButton("help@info.com");
+        LabelButton lbLink = new LabelButton("majid.hussainqutriyo@gmail.com");
 
         panelInfo.add(lbLink);
 
@@ -123,14 +154,9 @@ public class Login extends Form {
     }
 
     private ModelUser getUser(String user, String password) {
-
-        // just testing.
-        // input any user and password is admin by default
-        // user='staff' password='123' if we want to test validation menu for role staff
-
         if (user.equals("staff") && password.equals("123")) {
             return new ModelUser("Justin White", "justinwhite@gmail.com", ModelUser.Role.STAFF);
         }
-        return new ModelUser("Majid Hussain", "majid.hussainqutriyo@gmail.com", ModelUser.Role.ADMIN);
+        return new ModelUser("Majid.Hussain", "majidhussain@gmail.com", ModelUser.Role.ADMIN);
     }
 }

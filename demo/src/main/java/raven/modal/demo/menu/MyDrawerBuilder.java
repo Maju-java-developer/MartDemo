@@ -4,11 +4,27 @@ import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import raven.extras.AvatarIcon;
 import raven.modal.demo.Demo;
-import raven.modal.demo.forms.*;
+import raven.modal.demo.forms.FormCustomer;
+import raven.modal.demo.forms.FormDashboard;
+import raven.modal.demo.forms.FormProducts;
+import raven.modal.demo.forms.FormPurchase;
+import raven.modal.demo.forms.FormResponsiveLayout;
+import raven.modal.demo.forms.FormSale;
+import raven.modal.demo.forms.FormSupplier;
+import raven.modal.demo.forms.FormTable;
+import raven.modal.demo.forms.FormUser;
 import raven.modal.demo.model.ModelUser;
 import raven.modal.demo.system.AllForms;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.system.FormManager;
+import raven.modal.demo.tables.BrandTablePanel;
+import raven.modal.demo.tables.CategoryTablePanel;
+import raven.modal.demo.tables.CompanyTablePanel;
+import raven.modal.demo.tables.CustomerTablePanel;
+import raven.modal.demo.tables.PeckingTypeTablePanel;
+import raven.modal.demo.tables.ProductTablePanel;
+import raven.modal.demo.tables.PurchaseTablePanel;
+import raven.modal.demo.tables.SupplierTablePanel;
 import raven.modal.drawer.DrawerPanel;
 import raven.modal.drawer.item.Item;
 import raven.modal.drawer.item.MenuItem;
@@ -56,11 +72,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         SimpleHeader header = (SimpleHeader) getHeader();
         SimpleHeaderData data = header.getSimpleHeaderData();
         AvatarIcon icon = (AvatarIcon) data.getIcon();
-        String iconName = user.getRole() == ModelUser.Role.ADMIN ? "avatar_male.svg" : "avatar_female.svg";
+        String iconName = user.getRole() == ModelUser.Role.ADMIN ? "avatar_me.svg" : "avatar_female.svg";
 
         icon.setIcon(new FlatSVGIcon("raven/modal/demo/drawer/image/" + iconName, 100, 100));
         data.setTitle(user.getUserName());
-        data.setDescription(user.getMail());
+        data.setDescription(user.getEmail());
         header.setSimpleHeaderData(data);
 
         if (updateMenuItem) {
@@ -80,7 +96,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
     @Override
     public SimpleHeaderData getSimpleHeaderData() {
-        AvatarIcon icon = new AvatarIcon(new FlatSVGIcon("raven/modal/demo/drawer/image/avatar_male.svg", 100, 100), 50, 50, 3.5f);
+        AvatarIcon icon = new AvatarIcon(new FlatSVGIcon("raven/modal/demo/drawer/image/avatar_me.svg", 100, 100), 50, 50, 3.5f);
         icon.setType(AvatarIcon.Type.MASK_SQUIRCLE);
         icon.setBorder(2, 2);
 
@@ -94,8 +110,8 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
         return new SimpleHeaderData()
                 .setIcon(icon)
-                .setTitle("Majid Hussain")
-                .setDescription("majid.hussainqutriyo@gmail.com");
+                .setTitle(user != null ? user.getUserName() : "")
+                .setDescription(user != null ? user.getEmail(): "");
     }
 
     private void changeAvatarIconBorderColor(AvatarIcon icon) {
@@ -125,51 +141,26 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
         MenuItem items[] = new MenuItem[]{
                 new Item.Label("MAIN"),
-                new Item("Dashboard", "dashboard.svg", FormDashboard.class),
-                new Item.Label("SWING UI"),
-                new Item("Forms", "forms.svg")
-                        .subMenu("Input", FormInput.class)
-                        .subMenu("Table", FormTable.class)
-                        .subMenu("Responsive Layout", FormResponsiveLayout.class),
-                new Item("Components", "components.svg")
-                        .subMenu("Modal", FormModal.class)
-                        .subMenu("Toast", FormToast.class)
-                        .subMenu("Date Time", FormDateTime.class)
-                        .subMenu("Color Picker", FormColorPicker.class)
-                        .subMenu("Avatar Icon", FormAvatarIcon.class)
-                        .subMenu("Slide Pane", FormSlidePane.class),
-                new Item("Swing Pack", "pack.svg")
-                        .subMenu("Pagination", FormPagination.class)
-                        .subMenu("MultiSelect", FormMultiSelect.class),
-                new Item("Email", "email.svg")
-                        .subMenu("Inbox")
-                        .subMenu(
-                                new Item("Group Read")
-                                        .subMenu("Read 1")
-                                        .subMenu("Read 2")
-                                        .subMenu(
-                                                new Item("Group Item")
-                                                        .subMenu("Item 1")
-                                                        .subMenu("Item 2")
-                                                        .subMenu("Item 3")
-                                                        .subMenu("Item 4")
-                                                        .subMenu("Item 5")
-                                                        .subMenu("Item 6")
-                                        )
-                                        .subMenu("Read 3")
-                                        .subMenu("Read 4")
-                                        .subMenu("Read 5")
-                        )
-                        .subMenu("Compost"),
-                new Item("Chat", "chat.svg"),
-                new Item("Calendar", "calendar.svg"),
-                new Item.Label("OTHER"),
-                new Item("Plugin", "plugin.svg")
-                        .subMenu("Plugin 1")
-                        .subMenu("Plugin 2")
-                        .subMenu("Plugin 3"),
-                new Item("Setting", "setting.svg", FormSetting.class),
-                new Item("About", "about.svg"),
+//                new Item("Dashboard", "dashboard.svg", FormDashboard.class),
+                new Item("Purchase", "chat.svg")
+                        .subMenu("Add Purchase", FormPurchase.class)
+                        .subMenu("Purchase History", PurchaseTablePanel.class),
+                new Item("Sale", "chat.svg")
+                        .subMenu("Add Sale", FormSale.class)
+                        .subMenu("Sale History", PurchaseTablePanel.class),
+                new Item("Suppliers", "chat.svg")
+                        .subMenu("Add Supplier", FormSupplier.class)
+                        .subMenu("View All Suppliers", SupplierTablePanel.class),
+                new Item("Customers", "chat.svg")
+                        .subMenu("Add Customer", FormCustomer.class)
+                        .subMenu("View All Customers", CustomerTablePanel.class),
+                new Item("Setting", "setting.svg")
+                        .subMenu("Company", CompanyTablePanel.class)
+                        .subMenu("Category", CategoryTablePanel.class)
+                        .subMenu("Pecking Type", PeckingTypeTablePanel.class)
+                        .subMenu("Brand", BrandTablePanel.class)
+                        .subMenu("Add Product", FormProducts.class)
+                        .subMenu("View All Products", ProductTablePanel.class),
                 new Item("Logout", "logout.svg")
         };
 
@@ -204,7 +195,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                     action.consume();
                     FormManager.showAbout();
                     return;
-                } else if (i == 10) {
+                } else if (i == 5) {
                     action.consume();
                     FormManager.logout();
                     return;

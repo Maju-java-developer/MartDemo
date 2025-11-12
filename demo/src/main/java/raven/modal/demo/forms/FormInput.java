@@ -18,5 +18,4 @@ public class FormInput extends Form {
         JLabel text = new JLabel("Input");
         add(text);
     }
-
 }

@@ -94,6 +94,7 @@ public class FormTable extends Form {
                 "tabType:card");
         tabb.addTab("Basic table", createBorder(createBasicTable()));
         tabb.addTab("Custom table", createBorder(createCustomTable()));
+        tabb.addTab("Majid Table", createBorder(createBasicTable()));
         return tabb;
     }
 
