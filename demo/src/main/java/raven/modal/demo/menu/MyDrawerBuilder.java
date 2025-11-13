@@ -1,3 +1,13 @@
+/*
+ * MyDrawerBuilder.java
+ * 
+ * A singleton builder for creating and customizing drawer menus in the Swing application.
+ * Provides capabilities for setting user details, customizing header/footer, and building menu options dynamically.
+ * 
+ * @author Majid.Hussain
+ * @date 13-11-2025
+ */
+
 package raven.modal.demo.menu;
 
 import com.formdev.flatlaf.FlatClientProperties;
@@ -40,11 +50,24 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
+/**
+ * Singleton builder for the application drawer menu,
+ * providing a central place for menu construction, header/footer customization,
+ * user info integration, and menu validation.
+ * 
+ * @author Majid.Hussain
+ * @date 13-11-2025
+ */
 public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
     private static MyDrawerBuilder instance;
     private ModelUser user;
 
+    /**
+     * Get the singleton instance of MyDrawerBuilder.
+     * 
+     * @return MyDrawerBuilder instance
+     */
     public static MyDrawerBuilder getInstance() {
         if (instance == null) {
             instance = new MyDrawerBuilder();
@@ -52,10 +75,20 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         return instance;
     }
 
+    /**
+     * Get current ModelUser.
+     *
+     * @return the current user
+     */
     public ModelUser getUser() {
         return user;
     }
 
+    /**
+     * Set the current user and update menu header and items if necessary.
+     *
+     * @param user ModelUser to set
+     */
     public void setUser(ModelUser user) {
         boolean updateMenuItem = this.user == null || this.user.getRole() != user.getRole();
 
@@ -82,6 +115,10 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
     private final int SHADOW_SIZE = 12;
 
+    /**
+     * Private constructor for singleton pattern.
+     * Initializes drawer builder with customized menu options and footer.
+     */
     private MyDrawerBuilder() {
         super(createSimpleMenuOption());
         LightDarkButtonFooter lightDarkButtonFooter = (LightDarkButtonFooter) getFooter();
@@ -90,6 +127,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         });
     }
 
+    /**
+     * Get data for the header, including avatar, title, and description.
+     *
+     * @return SimpleHeaderData for drawer header
+     */
     @Override
     public SimpleHeaderData getSimpleHeaderData() {
         AvatarIcon icon = new AvatarIcon(new FlatSVGIcon("raven/modal/demo/drawer/image/avatar_me.svg", 100, 100), 50, 50, 3.5f);
@@ -110,10 +152,20 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 .setDescription(user != null ? user.getEmail(): "");
     }
 
+    /**
+     * Change the border color for avatar icon depending on current look and feel.
+     * 
+     * @param icon AvatarIcon to update
+     */
     private void changeAvatarIconBorderColor(AvatarIcon icon) {
         icon.setBorderColor(new AvatarIcon.BorderColor(UIManager.getColor("Component.accentColor"), 0.7f));
     }
 
+    /**
+     * Get data for the drawer footer (app version info).
+     *
+     * @return SimpleFooterData for drawer footer
+     */
     @Override
     public SimpleFooterData getSimpleFooterData() {
         return new SimpleFooterData()
@@ -121,6 +173,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 .setDescription("Version " + Demo.DEMO_VERSION);
     }
 
+    /**
+     * Create and customize Option for the drawer.
+     * 
+     * @return customized Option instance
+     */
     @Override
     public Option createOption() {
         Option option = super.createOption();
@@ -130,6 +187,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         return option;
     }
 
+    /**
+     * Build a MenuOption with customized MenuItem structure and menu events.
+     * 
+     * @return MenuOption for the drawer's menu
+     */
     public static MenuOption createSimpleMenuOption() {
 
         // create simple menu option
@@ -163,6 +225,13 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
         simpleMenuOption.setMenuStyle(new MenuStyle() {
 
+            /**
+             * Style each menu item according to its level.
+             *
+             * @param menu the menu button
+             * @param index item index path
+             * @param isMainItem if this is a main item
+             */
             @Override
             public void styleMenuItem(JButton menu, int[] index, boolean isMainItem) {
                 boolean isTopLevel = index.length == 1;
@@ -173,6 +242,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 }
             }
 
+            /**
+             * Style the main menu component.
+             * 
+             * @param component the menu component
+             */
             @Override
             public void styleMenu(JComponent component) {
                 component.putClientProperty(FlatClientProperties.STYLE, getDrawerBackgroundStyle());
@@ -183,6 +257,12 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         simpleMenuOption.setMenuValidation(new MyMenuValidation());
 
         simpleMenuOption.addMenuEvent(new MenuEvent() {
+            /**
+             * Handle menu selection events and perform required actions based on menu index.
+             *
+             * @param action MenuAction object
+             * @param index Index path of selected menu
+             */
             @Override
             public void selected(MenuAction action, int[] index) {
                 System.out.println("Drawer menu selected " + Arrays.toString(index));
@@ -213,31 +293,61 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         return simpleMenuOption;
     }
 
+    /**
+     * Get the drawer width with shadow.
+     * 
+     * @return drawer width in pixels
+     */
     @Override
     public int getDrawerWidth() {
         return 270 + SHADOW_SIZE;
     }
 
+    /**
+     * Get the compact drawer width with shadow.
+     * 
+     * @return compact drawer width in pixels
+     */
     @Override
     public int getDrawerCompactWidth() {
         return 80 + SHADOW_SIZE;
     }
 
+    /**
+     * Get value for open drawer location.
+     * 
+     * @return open drawer location
+     */
     @Override
     public int getOpenDrawerAt() {
         return 1000;
     }
 
+    /**
+     * Check if drawer should open at scale.
+     * 
+     * @return true if drawer opens at scale, false otherwise
+     */
     @Override
     public boolean openDrawerAtScale() {
         return false;
     }
 
+    /**
+     * Apply drawer panel styles.
+     *
+     * @param drawerPanel DrawerPanel instance to style
+     */
     @Override
     public void build(DrawerPanel drawerPanel) {
         drawerPanel.putClientProperty(FlatClientProperties.STYLE, getDrawerBackgroundStyle());
     }
 
+    /**
+     * Get drawer background styling string for look and feel adaptation.
+     * 
+     * @return style string for drawer background
+     */
     private static String getDrawerBackgroundStyle() {
         return "" +
                 "[light]background:tint($Panel.background,20%);" +
