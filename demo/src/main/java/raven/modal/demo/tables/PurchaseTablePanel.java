@@ -2,12 +2,14 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.demo.forms.FormViewPurchase;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.PurchaseDao;
 import raven.modal.demo.forms.FormPurchase;
 import raven.modal.demo.model.PurchaseModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -76,8 +78,13 @@ public class PurchaseTablePanel extends Form implements TableActions {
         purchaseTable.getColumnModel().getColumn(actionCol).setCellEditor(new TableActionCellEditor(purchaseTable, tableActions()));
 
         // Fix column width
-        purchaseTable.getColumnModel().getColumn(0).setPreferredWidth(40); // ID
-        purchaseTable.getColumnModel().getColumn(actionCol).setPreferredWidth(200);
+        purchaseTable.getColumnModel().getColumn(0).setMaxWidth(30); // ID
+        purchaseTable.getColumnModel().getColumn(1).setPreferredWidth(100); // Vendor Name
+        purchaseTable.getColumnModel().getColumn(2).setMaxWidth(80); // Date
+        purchaseTable.getColumnModel().getColumn(3).setPreferredWidth(75); // Total Amount
+        purchaseTable.getColumnModel().getColumn(4).setPreferredWidth(75); // Paid Amount
+        purchaseTable.getColumnModel().getColumn(5).setPreferredWidth(75); // Remaining Amount
+        purchaseTable.getColumnModel().getColumn(actionCol).setPreferredWidth(300);
 
         purchaseTable.getTableHeader().putClientProperty(FlatClientProperties.STYLE, ""
                 + "height:30;"
@@ -219,6 +226,7 @@ public class PurchaseTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
+                new ActionItem("View", this::onView),
                 new ActionItem("Payment", (table1, row) -> {
                     int purchaseId = (int) tableModel.getValueAt(row, 0);
                     String vendorName = tableModel.getValueAt(row, 1).toString();
@@ -230,5 +238,17 @@ public class PurchaseTablePanel extends Form implements TableActions {
                     onDelete(row);
                 }),
         };
+    }
+
+    private void onView(JTable table, int row) {
+        // Assuming PurchaseID is stored in a hidden column (e.g., column index 7)
+        int purchaseId = (int) table.getValueAt(row, 0);
+
+        // Open the FormViewPurchase in a modal dialog
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormViewPurchase(purchaseId),
+                "View Purchase Details"
+        );
     }
 }
