@@ -25,7 +25,7 @@ public class MainForm extends JPanel {
         add(createRefreshLine(), "height 3!");
         add(createMain());
         add(new JSeparator(), "height 2!");
-        add(createFooter());
+//        add(createFooter());
     }
 
     private JPanel createHeader() {
@@ -62,7 +62,7 @@ public class MainForm extends JPanel {
         toolBar.add(buttonRedo);
         toolBar.add(buttonRefresh);
         panel.add(toolBar);
-        panel.add(createSearchBox(), "gapx n 135");
+//        panel.add(createSearchBox(), "gapx n 135");
         return panel;
     }
 
