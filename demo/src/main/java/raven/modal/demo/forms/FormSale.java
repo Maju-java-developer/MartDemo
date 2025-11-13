@@ -51,7 +51,7 @@ public class FormSale extends Form implements TableActions {
     private JTextArea txtComment;
     private JTextField txtActualAmount, txtDiscountValue, txtTotalAmount, txtReceivingAmount;
     private JTextField txtGSTRate, txtGSTAmount; // New GST fields
-    private JButton btnSave, btnSaveAndPrint, btnClose;
+    private JButton btnSave, btnSaveAndPrint, clearBtn;
 
     private int saleId = 0;
     private final ProductDao productDao = new ProductDao();
@@ -199,12 +199,12 @@ public class FormSale extends Form implements TableActions {
 
         // Button Row
         JPanel buttonPanel = new JPanel(new MigLayout("right, insets 10 0 0 0", "[][][]"));
-        btnClose = new JButton("Close");
+        clearBtn = new JButton("Clear");
         btnSave = new JButton("Save");
         btnSaveAndPrint = new JButton("Save & Print");
 
-        btnClose.setBackground(new Color(200, 50, 50));
-        btnClose.setForeground(Color.WHITE);
+        clearBtn.setBackground(new Color(200, 50, 50));
+        clearBtn.setForeground(Color.WHITE);
         btnSave.setBackground(new Color(50, 150, 250));
         btnSave.setForeground(Color.WHITE);
         btnSaveAndPrint.setBackground(new Color(50, 200, 50));
@@ -212,9 +212,9 @@ public class FormSale extends Form implements TableActions {
 
         btnSave.addActionListener(e -> saveSale(false));
         btnSaveAndPrint.addActionListener(e -> saveSale(true));
-        btnClose.addActionListener(e -> SwingUtilities.getWindowAncestor(this).dispose());
+        clearBtn.addActionListener(e -> clearForm());
 
-        buttonPanel.add(btnClose);
+        buttonPanel.add(clearBtn);
         buttonPanel.add(btnSave);
         buttonPanel.add(btnSaveAndPrint);
 
@@ -390,17 +390,27 @@ public class FormSale extends Form implements TableActions {
         });
 
         // Clear and update
-        clearDetailInput();
+        clearAddProductDetails();
         updateActualAmount();
     }
 
-    private void clearDetailInput() {
+    private void clearAddProductDetails() {
         JComponentUtils.resetTextField(txtCartons, "0");
         JComponentUtils.resetTextField(txtUnits, "0");
         JComponentUtils.resetTextField(txtUnitPrice, "0.00");
         JComponentUtils.resetTextField(txtDiscountLine, "0");
         ((JTextField) cmbProductSearch.getEditor().getEditorComponent()).setText("");
         selectedProduct = null;
+    }
+
+    private void clearForm() {
+        clearAddProductDetails();
+        txtActualAmount.setText("0.00");
+        txtGSTAmount.setText("0.00");
+        txtTotalAmount.setText("0.00");
+        txtReceivingAmount.setText("0.00");
+        cmbCustomer.setSelectedIndex(0);
+        detailModel.setRowCount(0);
     }
 
     private void updateActualAmount() {
@@ -528,7 +538,7 @@ public class FormSale extends Form implements TableActions {
         } else {
             saleDao.saveSale(saleModel);
             JOptionPane.showMessageDialog(this, "New Sale has been done!", "Success Sale", JOptionPane.INFORMATION_MESSAGE);
-            clearDetailInput();
+            clearForm();
         }
 
     }

@@ -138,10 +138,10 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         MenuItem items[] = new MenuItem[]{
                 new Item.Label("MAIN"),
 //                new Item("Dashboard", "dashboard.svg", FormDashboard.class),
-                new Item("Purchase", "chat.svg")
+                new Item("Purchase", "purchases.svg")
                         .subMenu("Add Purchase", FormPurchase.class)
                         .subMenu("Purchase History", PurchaseTablePanel.class),
-                new Item("Sale", "chat.svg")
+                new Item("Sale", "sale.svg")
                         .subMenu("Add Sale", FormSale.class)
                         .subMenu("Sale History", PurchaseTablePanel.class),
                 new Item("Suppliers", "chat.svg")
@@ -155,8 +155,9 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         .subMenu("Category", CategoryTablePanel.class)
                         .subMenu("Pecking Type", PeckingTypeTablePanel.class)
                         .subMenu("Brand", BrandTablePanel.class)
-                        .subMenu("Add Product", FormProducts.class)
-                        .subMenu("View All Products", ProductTablePanel.class),
+                        .subMenu( new Item("Product")
+                                .subMenu("Add Product", FormProducts.class)
+                                .subMenu("View All Products", ProductTablePanel.class)),
                 new Item("Logout", "logout.svg")
         };
 
