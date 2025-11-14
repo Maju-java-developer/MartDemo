@@ -17,6 +17,32 @@ import java.util.List;
 public class SupplierDao {
 
     /**
+     * Fetches only those suppliers who have a remaining OutstandingBalance > 0.
+     * This is used for the Payment dialog.
+     * @return List of SupplierModel with outstanding balances.
+     */
+    public List<SupplierModel> getRemainingBalanceSuppliers() {
+        // ASSUMPTION: The TBLSuppliers table has columns: SupplierID, Name, OutstandingBalance
+        String sql = "SELECT SupplierID, SupplierName, OpeningBalance FROM TBLSuppliers WHERE OpeningBalance > 0 ORDER BY SupplierName ASC";
+        List<SupplierModel> suppliers = new ArrayList<>();
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                // Fetch only the necessary fields for the payment form
+                SupplierModel supplier = new SupplierModel();
+                supplier.setSupplierID(rs.getInt("SupplierID"));
+                supplier.setSupplierName(rs.getString("SupplierName"));
+                suppliers.add(supplier);
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error fetching outstanding suppliers: " + e.getMessage());
+        }
+        return suppliers;
+    }
+    /**
      * Updates the OutstandingBalance for a supplier based on a new transaction.
      * OutstandingBalance is INCREASED by the Purchase Total and DECREASED by the Paid Amount.
      *
@@ -174,7 +200,6 @@ public class SupplierDao {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-    // --- READ/FETCH Single Record Method (For Edit Form) ---
     public SupplierModel getSupplierById(int supplierId) {
         String sql = "SELECT SupplierID, SupplierName, ContactNo, Email, Address, OpeningBalance, CreatedDate FROM TBLSuppliers WHERE SupplierID = ?";
         SupplierModel supplier = null;
@@ -199,5 +224,24 @@ public class SupplierDao {
             JOptionPane.showMessageDialog(null, "Error fetching vendor: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
         return supplier;
+    }
+    /**
+     * Fetches the current OutstandingBalance for a specific supplier.
+     */
+    public double getSupplierBalance(int supplierId) {
+        String sql = "SELECT OpeningBalance FROM TBLSuppliers WHERE SupplierID = ?";
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, supplierId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("OpeningBalance");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error fetching supplier balance: " + e.getMessage());
+        }
+        return 0.0;
     }
 }

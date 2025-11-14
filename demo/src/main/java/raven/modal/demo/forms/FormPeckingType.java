@@ -120,7 +120,7 @@ public class FormPeckingType extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtTypeName.setText("");
         txtQuarterQty.setText("1"); // Reset to default 1
         cmbIsActive.setSelectedItem("Active");

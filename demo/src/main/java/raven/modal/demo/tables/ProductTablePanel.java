@@ -2,6 +2,7 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.demo.forms.FormViewPurchase;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.UtilsDao;
@@ -9,6 +10,7 @@ import raven.modal.demo.forms.FormProducts;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -24,14 +26,17 @@ public class ProductTablePanel extends Form implements TableActions {
 
     private JTable table;
     private DefaultTableModel model;
-    private ProductDao productDao;
+    private ProductDao productDao = new ProductDao();
     private JPagination pagination;
     private JLabel lbTotal;
     private int limit = 10; // Items per page
 
     public ProductTablePanel() {
-        productDao = new ProductDao();
         initUI();
+    }
+
+    @Override
+    public void formOpen() {
         loadProducts(1);
     }
 
@@ -135,11 +140,6 @@ public class ProductTablePanel extends Form implements TableActions {
     }
 
     @Override
-    public void formInit() {
-        loadProducts(1);
-    }
-
-    @Override
     public void formRefresh() {
         loadProducts(pagination.getSelectedPage());
     }
@@ -168,18 +168,12 @@ public class ProductTablePanel extends Form implements TableActions {
         };
     }
     private void openProductFormModal(int typeId) {
-        FormProducts formProducts = new FormProducts(typeId);
-
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                typeId > 0 ? "Edit Product Type" : "Create New Product Type",
-                Dialog.ModalityType.APPLICATION_MODAL);
-
-        dialog.setContentPane(formProducts);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormProducts(typeId),
+                typeId > 0 ? "Edit Product Type" : "Create New Product Type"
+        );
         formRefresh();
     }
 
-    // createIcon method removed as it was not fully implemented/used
 }

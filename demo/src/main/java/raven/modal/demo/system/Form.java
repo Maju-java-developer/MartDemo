@@ -21,7 +21,9 @@ public class Form extends JPanel {
 
     public void formRefresh() {
     }
+    public void clearForm(){
 
+    }
     protected final void formCheck() {
         if (oldTheme != UIManager.getLookAndFeel()) {
             oldTheme = UIManager.getLookAndFeel();

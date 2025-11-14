@@ -543,7 +543,7 @@ public class FormPurchase extends Form implements TableActions {
         title.setText("Edit Purchase #" + id + " (Vendor: " + purchase.getSupplierName() + ")");
     }
 
-    private void clearForm() {
+    public void clearForm() {
         cmbVendor.setSelectedIndex(0);
         txtComment.setText("");
         txtActualAmount.setText("0");

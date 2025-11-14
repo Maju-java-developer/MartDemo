@@ -109,7 +109,7 @@ public class FormCategory extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtCategoryName.setText("");
         cmbIsActive.setSelectedItem("Active");
     }

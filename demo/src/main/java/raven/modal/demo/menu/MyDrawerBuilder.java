@@ -19,6 +19,7 @@ import raven.modal.demo.forms.FormProducts;
 import raven.modal.demo.forms.FormPurchase;
 import raven.modal.demo.forms.FormSale;
 import raven.modal.demo.forms.FormSupplier;
+import raven.modal.demo.forms.FormSupplierPayment;
 import raven.modal.demo.model.ModelUser;
 import raven.modal.demo.system.AllForms;
 import raven.modal.demo.system.Form;
@@ -202,10 +203,11 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
 //                new Item("Dashboard", "dashboard.svg", FormDashboard.class),
                 new Item("Purchase", "purchases.svg")
                         .subMenu("Add Purchase", FormPurchase.class)
-                        .subMenu("Purchase History", PurchaseTablePanel.class),
+                        .subMenu("Purchase History", PurchaseTablePanel.class)
+                        .subMenu("Purchase Payment", FormSupplierPayment.class),
                 new Item("Sale", "sale.svg")
-                        .subMenu("Add Sale", FormSale.class)
-                        .subMenu("Sale History", PurchaseTablePanel.class),
+                        .subMenu("Add Sale", FormSale.class),
+//                        .subMenu("Sale History", PurchaseTablePanel.class),
                 new Item("Suppliers", "chat.svg")
                         .subMenu("Add Supplier", FormSupplier.class)
                         .subMenu("View All Suppliers", SupplierTablePanel.class),

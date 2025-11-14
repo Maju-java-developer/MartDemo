@@ -31,6 +31,10 @@ public class PurchaseTablePanel extends Form implements TableActions {
 
     public PurchaseTablePanel() {
         initUI();
+    }
+
+    @Override
+    public void formOpen() {
         loadPurchaseHistory(1);
     }
 

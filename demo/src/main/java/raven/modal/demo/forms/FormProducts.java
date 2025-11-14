@@ -219,7 +219,7 @@ public class FormProducts extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtProductCode.setText("");
         txtProductName.setText("");
         cmbCompany.setSelectedIndex(0);

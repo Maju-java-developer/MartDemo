@@ -179,7 +179,24 @@ public class FormCustomer extends Form {
         } else {
             customerDao.addCustomer(customer); // Call Add
             JOptionPane.showMessageDialog(this, customerId > 0 ? "Customer updated successfully!" : "Customer added successfully!");
+            clearForm();
         }
     }
 
+    public void clearForm() {
+        txtCustomerName.setText("");
+        txtContactNo.setText("");
+        txtEmail.setText("");
+        txtOpeningBalance.setText("0.00");
+        taxPer.setText("0.00");
+        txtAddress.setText("");
+
+        // Reset focus to first field
+        txtCustomerName.requestFocus();
+
+        // Reset title only when in Add mode
+        if (customerId == 0) {
+            titleLabel.setText("Add Customer");
+        }
+    }
 }

@@ -135,7 +135,7 @@ public class FormSupplier extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtSupplierName.setText("");
         txtContactNo.setText("");
         txtEmail.setText("");

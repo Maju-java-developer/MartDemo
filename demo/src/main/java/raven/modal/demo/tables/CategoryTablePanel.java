@@ -8,6 +8,7 @@ import raven.modal.demo.forms.FormCategory;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -102,17 +103,11 @@ public class CategoryTablePanel extends Form implements TableActions {
 
     // --- MODAL DIALOG METHOD ---
     private void openCategoryFormModal(int categoryId) {
-        FormCategory formPanel = new FormCategory(categoryId);
-
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                categoryId > 0 ? "Edit Category" : "Create New Category",
-                Dialog.ModalityType.APPLICATION_MODAL);
-
-        dialog.setContentPane(formPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormCategory(categoryId),
+                categoryId > 0 ? "Edit Category" : "Create New Category"
+        );
         formRefresh();
     }
 
@@ -153,7 +148,6 @@ public class CategoryTablePanel extends Form implements TableActions {
                 new ActionItem("Edit", (table1, row) -> {
                     int categoryId = (int) table1.getValueAt(row, 0);
                     openCategoryFormModal(categoryId); // Open modal in EDIT mode
-                    formRefresh(); // Refresh table after deletion
                 }),
                 new ActionItem("Delete", (table1, row) -> {
                     int categoryId = (int) table1.getValueAt(row, 0);

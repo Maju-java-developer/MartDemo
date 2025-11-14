@@ -116,7 +116,7 @@ public class FormCompany extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtCompanyName.setText("");
         cmbIsActive.setSelectedItem("Active");
     }

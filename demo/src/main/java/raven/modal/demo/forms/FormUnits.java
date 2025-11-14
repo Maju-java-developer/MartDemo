@@ -118,7 +118,7 @@ public class FormUnits extends Form {
         }
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtUnitName.setText("");
     }
 

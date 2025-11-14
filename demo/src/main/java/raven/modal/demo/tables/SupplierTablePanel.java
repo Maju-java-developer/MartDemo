@@ -9,6 +9,7 @@ import raven.modal.demo.forms.FormSupplier;
 import raven.modal.demo.model.SupplierModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -24,15 +25,18 @@ public class SupplierTablePanel extends Form implements TableActions{
 
     private JTable table;
     private DefaultTableModel model;
-    private SupplierDao supplierDao;
+    private SupplierDao supplierDao = new SupplierDao();
     private JPagination pagination;
     private JLabel lbTotal;
     private int limit = 10;
     private JButton btnCreate; // Added standard create button
 
     public SupplierTablePanel() {
-        supplierDao = new SupplierDao();
         initUI();
+    }
+
+    @Override
+    public void formOpen() {
         loadSuppliers(1);
     }
 
@@ -70,7 +74,7 @@ public class SupplierTablePanel extends Form implements TableActions{
         table.getTableHeader().setDefaultRenderer(new TableHeaderAlignment(table) {
             @Override
             protected int getAlignment(int column) {
-                if (column == 1 || column == 5) {
+                if (column == 1 || column == 6) {
                     return SwingConstants.CENTER;
                 }
                 return SwingConstants.LEADING;
@@ -108,20 +112,13 @@ public class SupplierTablePanel extends Form implements TableActions{
 
     // --- Modal Handler ---
     private void openSupplierFormModal(int id) {
-        FormSupplier formPanel = new FormSupplier(id);
-
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                id > 0 ? "Edit Vendor" : "Create New Vendor",
-                Dialog.ModalityType.APPLICATION_MODAL);
-
-        dialog.setContentPane(formPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
-        formRefresh(); // Refresh table after form closes
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormSupplier(id),
+                id > 0 ? "Edit Vendor" : "Create New Vendor"
+        );
+        formRefresh();
     }
-
 
     private void loadSuppliers(int page) {
         model.setRowCount(0);
@@ -152,11 +149,6 @@ public class SupplierTablePanel extends Form implements TableActions{
     }
 
     @Override
-    public void formInit() {
-        loadSuppliers(1);
-    }
-
-    @Override
     public void formRefresh() {
         loadSuppliers(pagination.getSelectedPage());
     }
@@ -164,10 +156,10 @@ public class SupplierTablePanel extends Form implements TableActions{
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[]{
-                new ActionItem("Payment", (table1, row) -> {
-                    String supplier = table1.getValueAt(row, 1).toString();
-                    JOptionPane.showMessageDialog(table1, "Add Payment for " + supplier);
-                }),
+//                new ActionItem("Payment", (table1, row) -> {
+//                    String supplier = table1.getValueAt(row, 1).toString();
+//                    JOptionPane.showMessageDialog(table1, "Add Payment for " + supplier);
+//                }),
                 new ActionItem("Edit", (table1, row) -> {
                     int supplierId = (int) table1.getValueAt(row, 0); // Get ID from first column
                     openSupplierFormModal(supplierId);
@@ -183,11 +175,12 @@ public class SupplierTablePanel extends Form implements TableActions{
                     if (confirm == JOptionPane.YES_OPTION) {
                         if (supplierDao.deleteSupplier(supplierId)) { // Call DAO delete
                             JOptionPane.showMessageDialog(table1, "Vendor deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                            formRefresh(); // Refresh table after successful deletion
+                            formRefresh();
                         }
-                        // DAO handles error messages (e.g., integrity constraint)
                     }
                 })
         };
     }
+
+
 }

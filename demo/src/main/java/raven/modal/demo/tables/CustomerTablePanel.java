@@ -24,14 +24,17 @@ public class CustomerTablePanel extends Form implements TableActions{
 
     private JTable table;
     private DefaultTableModel model;
-    private CustomerDao customerDao;
+    private CustomerDao customerDao = new CustomerDao();
     private JPagination pagination;
     private JLabel lbTotal;
     private int limit = 10;
 
     public CustomerTablePanel() {
-        customerDao = new CustomerDao();
         initUI();
+    }
+
+    @Override
+    public void formOpen() {
         loadCustomers(1);
     }
 

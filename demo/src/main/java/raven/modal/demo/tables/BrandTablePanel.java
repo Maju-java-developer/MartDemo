@@ -2,11 +2,13 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.demo.forms.FormProducts;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.BrandDao;
 import raven.modal.demo.forms.FormBrand;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -102,19 +104,12 @@ public class BrandTablePanel extends Form implements TableActions {
         add(pagePanel);
     }
 
-    // --- MODAL DIALOG METHOD ---
     private void openBrandFormModal(int brandId) {
-        FormBrand formPanel = new FormBrand(brandId);
-
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                brandId > 0 ? "Edit Brand" : "Create New Brand",
-                Dialog.ModalityType.APPLICATION_MODAL);
-
-        dialog.setContentPane(formPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormBrand(brandId),
+                brandId > 0 ? "Edit Brand" : "Create New Brand"
+        );
         // Refresh table after the dialog is closed (i.e., after save/update)
         formRefresh();
     }

@@ -103,7 +103,7 @@ public class FormUser extends Form {
         return buttonPanel;
     }
 
-    private void clearForm() {
+    public void clearForm() {
         txtFullName.setText("");
         txtEmail.setText("");
         txtContactNo.setText("");

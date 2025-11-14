@@ -13,16 +13,14 @@ import raven.modal.demo.utils.combox.ComboBoxUtils;
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 @SystemForm(name = "Brand Form", description = "Add or edit product brand information", tags = {"brand", "form"})
 public class FormBrand extends Form {
 
     private JTextField txtBrandTitle;
-    private JComboBox<CompanyModel> cmbCompany; // JComboBox of CompanyModel objects
+    private JComboBox<CompanyModel> cmbCompany;
     private JComboBox<String> cmbIsActive;
     private JButton btnSave, btnClear;
 
@@ -30,8 +28,6 @@ public class FormBrand extends Form {
     private JLabel titleLabel;
     private BrandDao brandDao = new BrandDao();
     private CompanyDao companyDao = new CompanyDao();
-
-    private Map<String, Integer> companyMap = new HashMap<>();
 
     public FormBrand(int brandId) {
         this.brandId = brandId;
@@ -83,19 +79,6 @@ public class FormBrand extends Form {
 
         // Set up renderers for clarity (similarly to FormBrand)
         ComboBoxUtils.setupComboBoxRenderer(cmbCompany, m -> ((CompanyModel)m).getCompanyName());
-
-//        // Custom renderer to show CompanyName in JComboBox
-//        cmbCompany.setRenderer(new DefaultListCellRenderer() {
-//            @Override
-//            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-//                if (value instanceof CompanyModel) {
-//                    CompanyModel company = (CompanyModel) value;
-//                    value = company.getCompanyName();
-//                }
-//                return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-//            }
-//        });
-
         txtBrandTitle.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter brand title (e.g., Apple, Samsung)");
 
         panel.add(new JLabel("Brand Title *:"));
@@ -147,7 +130,8 @@ public class FormBrand extends Form {
         }
     }
 
-    private void clearForm() {
+    @Override
+    public void clearForm() {
         txtBrandTitle.setText("");
         cmbIsActive.setSelectedItem("Active");
         cmbCompany.setSelectedIndex(0); // Select the "--- Select Company ---" placeholder

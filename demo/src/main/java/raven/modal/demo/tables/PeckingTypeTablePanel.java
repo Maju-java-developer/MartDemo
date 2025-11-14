@@ -8,6 +8,7 @@ import raven.modal.demo.forms.FormPeckingType;
 import raven.modal.demo.model.PeckingTypeModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -103,17 +104,11 @@ public class PeckingTypeTablePanel extends Form implements TableActions {
 
     // --- MODAL DIALOG METHOD ---
     private void openPeckingTypeFormModal(int typeId) {
-        FormPeckingType formPanel = new FormPeckingType(typeId);
-
-        JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this),
-                typeId > 0 ? "Edit Pecking Type" : "Create New Pecking Type",
-                Dialog.ModalityType.APPLICATION_MODAL);
-
-        dialog.setContentPane(formPanel);
-        dialog.pack();
-        dialog.setLocationRelativeTo(null);
-        dialog.setVisible(true);
-
+        JComponentUtils.showModal(
+                SwingUtilities.getWindowAncestor(this),
+                new FormPeckingType(typeId),
+                typeId > 0 ? "Edit Pecking Type" : "Create New Pecking Type"
+        );
         formRefresh();
     }
 

@@ -168,7 +168,7 @@ public class FormBrand extends Form {
     /**
      * Clears all form fields and resets to default.
      */
-    private void clearForm() {
+    public void clearForm() {
         txtBrandTitle.setText("");
         cmbIsActive.setSelectedItem("Active");
         cmbCompany.setSelectedIndex(0);

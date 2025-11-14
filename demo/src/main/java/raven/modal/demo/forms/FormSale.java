@@ -403,7 +403,7 @@ public class FormSale extends Form implements TableActions {
         selectedProduct = null;
     }
 
-    private void clearForm() {
+    public void clearForm() {
         clearAddProductDetails();
         txtActualAmount.setText("0.00");
         txtGSTAmount.setText("0.00");
