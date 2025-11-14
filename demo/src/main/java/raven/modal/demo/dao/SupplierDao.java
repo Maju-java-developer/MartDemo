@@ -80,7 +80,7 @@ public class SupplierDao {
         List<SupplierModel> suppliers = new ArrayList<>();
 
         // Add a placeholder/default item
-        suppliers.add(SupplierModel.builder().supplierID(0).supplierName("--- Select Supplier ---").build());
+        suppliers.add(SupplierModel.builder().supplierID(0).supplierName("--- Select Vendor ---").build());
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              Statement st = conn.createStatement();
