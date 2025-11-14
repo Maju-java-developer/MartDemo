@@ -6,6 +6,7 @@ import raven.modal.demo.dao.PeckingTypeDao;
 import raven.modal.demo.model.PeckingTypeModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -63,6 +64,8 @@ public class FormPeckingType extends Form {
 
         txtTypeName = new JTextField();
         txtQuarterQty = new JTextField();
+        JComponentUtils.setNumberOnly(txtQuarterQty);
+
         cmbIsActive = new JComboBox<>(new String[]{"Active", "Inactive"});
         cmbIsActive.setSelectedItem("Active");
 

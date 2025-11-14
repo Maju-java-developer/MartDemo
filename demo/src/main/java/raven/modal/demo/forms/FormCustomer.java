@@ -6,6 +6,7 @@ import raven.modal.demo.dao.CustomerDao;
 import raven.modal.demo.model.CustomerModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -66,10 +67,13 @@ public class FormCustomer extends Form {
 
         txtCustomerName = new JTextField();
         txtContactNo = new JTextField();
+        JComponentUtils.setNumberOnly(txtContactNo);
         txtEmail = new JTextField();
         txtOpeningBalance = new JTextField("0.00");
+        JComponentUtils.setNumberOnly(txtOpeningBalance);
         txtAddress = new JTextArea(3, 20);
         taxPer = new JTextField("0.00");
+        JComponentUtils.setNumberOnly(taxPer);
         txtAddress.setLineWrap(true);
 
         txtAddress.setWrapStyleWord(true);
@@ -185,15 +189,12 @@ public class FormCustomer extends Form {
 
     public void clearForm() {
         txtCustomerName.setText("");
+        JComponentUtils.resetTextField(txtOpeningBalance, "0.00");
+        JComponentUtils.resetTextField(taxPer, "0.00");
         txtContactNo.setText("");
-        txtEmail.setText("");
-        txtOpeningBalance.setText("0.00");
-        taxPer.setText("0.00");
+        JComponentUtils.resetTextField(txtContactNo, "");
         txtAddress.setText("");
-
-        // Reset focus to first field
-        txtCustomerName.requestFocus();
-
+        txtEmail.setText("");
         // Reset title only when in Add mode
         if (customerId == 0) {
             titleLabel.setText("Add Customer");

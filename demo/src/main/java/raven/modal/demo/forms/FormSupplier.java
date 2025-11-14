@@ -6,6 +6,7 @@ import raven.modal.demo.dao.SupplierDao;
 import raven.modal.demo.model.SupplierModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
+import raven.modal.demo.utils.combox.JComponentUtils;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -65,8 +66,12 @@ public class FormSupplier extends Form {
 
         txtSupplierName = new JTextField();
         txtContactNo = new JTextField();
+        JComponentUtils.setNumberOnly(txtContactNo);
+
         txtEmail = new JTextField();
         txtOpeningBalance = new JTextField("0.00");
+        JComponentUtils.setNumberOnly(txtOpeningBalance);
+
         txtAddress = new JTextArea(3, 20);
         txtAddress.setLineWrap(true);
         txtAddress.setWrapStyleWord(true);
