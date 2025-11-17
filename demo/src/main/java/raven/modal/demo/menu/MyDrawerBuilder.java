@@ -203,13 +203,12 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         .subMenu("Add Purchase", FormPurchase.class)
                         .subMenu("Purchase History", PurchaseTablePanel.class)
                         .subMenu("Purchase Payment", FormSupplierPayment.class),
-                new Item("Sale", "sale.svg")
+                new Item("Sale", "sale-1.svg")
                         .subMenu("Add Sale", FormSale.class),
-//                        .subMenu("Sale History", PurchaseTablePanel.class),
-                new Item("Suppliers", "chat.svg")
+                new Item("Suppliers", "supplier-1.svg")
                         .subMenu("Add Supplier", FormSupplier.class)
                         .subMenu("View All Suppliers", SupplierTablePanel.class),
-                new Item("Customers", "chat.svg")
+                new Item("Customers", "customer-1.svg")
                         .subMenu("Add Customer", FormCustomer.class)
                         .subMenu("View All Customers", CustomerTablePanel.class),
                 new Item("Setting", "setting.svg")
@@ -220,7 +219,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         .subMenu( new Item("Product")
                                 .subMenu("Add Product", FormProducts.class)
                                 .subMenu("View All Products", ProductTablePanel.class)),
-                new Item( "Backup Manager", "setting.svg", FormBackupRestore.class),
+                new Item( "Backup Manager", "backup.svg", FormBackupRestore.class),
                 new Item("Logout", "logout.svg")
         };
 
