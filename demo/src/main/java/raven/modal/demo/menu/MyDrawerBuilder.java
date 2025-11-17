@@ -30,7 +30,7 @@ import raven.modal.demo.tables.BrandTablePanel;
 import raven.modal.demo.tables.CategoryTablePanel;
 import raven.modal.demo.tables.CompanyTablePanel;
 import raven.modal.demo.tables.CustomerTablePanel;
-import raven.modal.demo.tables.PeckingTypeTablePanel;
+import raven.modal.demo.tables.PackingTypeTablePanel;
 import raven.modal.demo.tables.ProductTablePanel;
 import raven.modal.demo.tables.PurchaseTablePanel;
 import raven.modal.demo.tables.SupplierTablePanel;
@@ -214,7 +214,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 new Item("Setting", "setting.svg")
                         .subMenu("Company", CompanyTablePanel.class)
                         .subMenu("Category", CategoryTablePanel.class)
-                        .subMenu("Pecking Type", PeckingTypeTablePanel.class)
+                        .subMenu("Pecking Type", PackingTypeTablePanel.class)
                         .subMenu("Brand", BrandTablePanel.class)
                         .subMenu( new Item("Product")
                                 .subMenu("Add Product", FormProducts.class)

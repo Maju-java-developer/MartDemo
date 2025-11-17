@@ -3,9 +3,9 @@ package raven.modal.demo.tables;
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.utils.Constants;
-import raven.modal.demo.dao.PeckingTypeDao;
-import raven.modal.demo.forms.FormPeckingType;
-import raven.modal.demo.model.PeckingTypeModel;
+import raven.modal.demo.dao.PackingTypeDao;
+import raven.modal.demo.forms.FormPackingType;
+import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
@@ -14,23 +14,22 @@ import raven.swingpack.JPagination;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Pecking Types", description = "Manage system Pecking type definitions", tags = {"Pecking", "table"})
-public class PeckingTypeTablePanel extends Form implements TableActions {
+public class PackingTypeTablePanel extends Form implements TableActions {
 
     private JTable table;
     private DefaultTableModel model;
-    private PeckingTypeDao PeckingTypeDao;
+    private PackingTypeDao PackingTypeDao;
     private JPagination pagination;
     private JLabel lbTotal;
     private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
-    public PeckingTypeTablePanel() {
-        PeckingTypeDao = new PeckingTypeDao();
+    public PackingTypeTablePanel() {
+        PackingTypeDao = new PackingTypeDao();
         initUI();
         loadPeckingTypes(1);
     }
@@ -106,7 +105,7 @@ public class PeckingTypeTablePanel extends Form implements TableActions {
     private void openPeckingTypeFormModal(int typeId) {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
-                new FormPeckingType(typeId),
+                new FormPackingType(typeId),
                 typeId > 0 ? "Edit Pecking Type" : "Create New Pecking Type"
         );
         formRefresh();
@@ -116,13 +115,13 @@ public class PeckingTypeTablePanel extends Form implements TableActions {
         model.setRowCount(0);
         int offset = (page - 1) * limit;
 
-        List<PeckingTypeModel> types = PeckingTypeDao.getAllPeckingTypes(offset, limit);
-        int totalTypes = PeckingTypeDao.getPeckingTypeCount();
+        List<PackingTypeModel> types = PackingTypeDao.getAllPeckingTypes(offset, limit);
+        int totalTypes = PackingTypeDao.getPeckingTypeCount();
 
-        for (PeckingTypeModel typeModel : types) {
+        for (PackingTypeModel typeModel : types) {
             model.addRow(new Object[]{
-                    typeModel.getPeckingTypeId(),
-                    typeModel.getPeckingTypeName(),
+                    typeModel.getPackingTypeId(),
+                    typeModel.getPackingTypeName(),
                     typeModel.getQuarterQty(),
                     typeModel.isActive() ? "Active" : "Inactive"
             });
@@ -159,7 +158,7 @@ public class PeckingTypeTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        PeckingTypeDao.deletePeckingType(typeId);
+                        PackingTypeDao.deletePackingType(typeId);
                         formRefresh();
                     }
                 })

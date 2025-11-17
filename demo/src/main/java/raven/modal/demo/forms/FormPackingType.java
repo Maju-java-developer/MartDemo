@@ -2,8 +2,8 @@ package raven.modal.demo.forms;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.dao.PeckingTypeDao;
-import raven.modal.demo.model.PeckingTypeModel;
+import raven.modal.demo.dao.PackingTypeDao;
+import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
@@ -14,7 +14,7 @@ import java.awt.*;
 import java.util.Objects;
 
 @SystemForm(name = "Pecking Type Form", description = "Add or edit Pecking type information", tags = {"Pecking", "form"})
-public class FormPeckingType extends Form {
+public class FormPackingType extends Form {
 
     private JTextField txtTypeName, txtQuarterQty;
     private JComboBox<String> cmbIsActive;
@@ -22,9 +22,9 @@ public class FormPeckingType extends Form {
 
     private int PeckingTypeId = 0;
     private JLabel titleLabel;
-    private PeckingTypeDao PeckingTypeDao = new PeckingTypeDao();
+    private PackingTypeDao PackingTypeDao = new PackingTypeDao();
 
-    public FormPeckingType(int PeckingTypeId) {
+    public FormPackingType(int PeckingTypeId) {
         this.PeckingTypeId = PeckingTypeId;
         init();
         if (this.PeckingTypeId > 0) {
@@ -32,7 +32,7 @@ public class FormPeckingType extends Form {
         }
     }
 
-    public FormPeckingType() {
+    public FormPackingType() {
         this(0);
     }
 
@@ -110,13 +110,13 @@ public class FormPeckingType extends Form {
     }
 
     private void loadPeckingTypeData(int id) {
-        PeckingTypeModel type = PeckingTypeDao.getPeckingTypeById(id);
+        PackingTypeModel type = PackingTypeDao.getPeckingTypeById(id);
 
         if (type != null) {
-            txtTypeName.setText(type.getPeckingTypeName());
+            txtTypeName.setText(type.getPackingTypeName());
             txtQuarterQty.setText(String.valueOf(type.getQuarterQty()));
             cmbIsActive.setSelectedItem(type.isActive() ? "Active" : "Inactive");
-            titleLabel.setText("Edit Pecking Type: " + type.getPeckingTypeName());
+            titleLabel.setText("Edit Pecking Type: " + type.getPackingTypeName());
         } else {
             JOptionPane.showMessageDialog(this, "Pecking Type ID " + id + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
             this.PeckingTypeId = 0;
@@ -154,17 +154,17 @@ public class FormPeckingType extends Form {
 
         boolean isActive = Objects.equals(cmbIsActive.getSelectedItem(), "Active");
 
-        PeckingTypeModel typeModel = PeckingTypeModel.builder()
-                .peckingTypeName(name)
+        PackingTypeModel typeModel = PackingTypeModel.builder()
+                .packingTypeName(name)
                 .quarterQty(quarterQty)
                 .isActive(isActive)
                 .build();
 
         if (PeckingTypeId > 0) {
-            typeModel.setPeckingTypeId(PeckingTypeId);
-            PeckingTypeDao.updatePeckingType(typeModel);
+            typeModel.setPackingTypeId(PeckingTypeId);
+            PackingTypeDao.updatePackingType(typeModel);
         } else {
-            PeckingTypeDao.addPeckingType(typeModel);
+            PackingTypeDao.addPackingType(typeModel);
         }
 
         SwingUtilities.getWindowAncestor(this).dispose();

@@ -5,12 +5,12 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.BrandDao;
 import raven.modal.demo.dao.CategoryDao;
 import raven.modal.demo.dao.CompanyDao;
-import raven.modal.demo.dao.PeckingTypeDao;
+import raven.modal.demo.dao.PackingTypeDao;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.model.CompanyModel;
-import raven.modal.demo.model.PeckingTypeModel;
+import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
@@ -27,7 +27,7 @@ public class FormProducts extends Form {
     private JTextField txtProductCode, txtProductName;
     private JComboBox<CompanyModel> cmbCompany;
     private JComboBox<CategoryModel> cmbCategory;
-    private JComboBox<PeckingTypeModel> cmbPeckingType;
+    private JComboBox<PackingTypeModel> cmbPeckingType;
     private JComboBox<BrandModel> cmbBrand; // Dependent dropdown
 
     private JCheckBox chkIsActive;
@@ -38,7 +38,7 @@ public class FormProducts extends Form {
 
     private final CompanyDao companyDao = new CompanyDao();
     private final CategoryDao categoryDao = new CategoryDao();
-    private final PeckingTypeDao peekingTypeDao = new PeckingTypeDao();
+    private final PackingTypeDao peekingTypeDao = new PackingTypeDao();
     private final BrandDao brandDao = new BrandDao();
     private final ProductDao productDao = new ProductDao();
 
@@ -92,8 +92,8 @@ public class FormProducts extends Form {
         cmbCategory.setModel(new DefaultComboBoxModel<>(categories.toArray(new CategoryModel[0])));
 
         // Load PeekingType (adjust method name as per your DAO)
-        List<PeckingTypeModel> types = peekingTypeDao.getActivePeekingTypesForDropdown();
-        cmbPeckingType.setModel(new DefaultComboBoxModel<>(types.toArray(new PeckingTypeModel[0])));
+        List<PackingTypeModel> types = peekingTypeDao.getActivePeekingTypesForDropdown();
+        cmbPeckingType.setModel(new DefaultComboBoxModel<>(types.toArray(new PackingTypeModel[0])));
 
         // Load Brand (initially loaded empty or with placeholder, updated by cmbCompany listener)
         updateBrandDropdown(0); // Load default placeholder initially
@@ -101,7 +101,7 @@ public class FormProducts extends Form {
         // Set up renderers for clarity (similarly to FormBrand)
         ComboBoxUtils.setupComboBoxRenderer(cmbCompany, m -> ((CompanyModel)m).getCompanyName());
         ComboBoxUtils.setupComboBoxRenderer(cmbCategory, m -> ((CategoryModel)m).getCategoryName());
-        ComboBoxUtils.setupComboBoxRenderer(cmbPeckingType, m -> ((PeckingTypeModel) m).getPeckingTypeName());
+        ComboBoxUtils.setupComboBoxRenderer(cmbPeckingType, m -> ((PackingTypeModel) m).getPackingTypeName());
         ComboBoxUtils.setupComboBoxRenderer(cmbBrand, m -> ((BrandModel)m).getBrandTitle());
     }
 
@@ -199,7 +199,7 @@ public class FormProducts extends Form {
 
             // Set Category/PeekingType
             ComboBoxUtils.setComboBoxSelection(cmbCategory, product.getCategoryId(), CategoryModel::getCategoryId);
-            ComboBoxUtils.setComboBoxSelection(cmbPeckingType, product.getPeckingTypeId(), PeckingTypeModel::getPeckingTypeId);
+            ComboBoxUtils.setComboBoxSelection(cmbPeckingType, product.getPeckingTypeId(), PackingTypeModel::getPackingTypeId);
 
             // Set Company (this must happen first to load the correct Brands)
             CompanyModel selectedCompany = ComboBoxUtils.setComboBoxSelection(cmbCompany, product.getCompanyId(), CompanyModel::getCompanyId);
@@ -234,7 +234,7 @@ public class FormProducts extends Form {
         CompanyModel company = (CompanyModel) cmbCompany.getSelectedItem();
         CategoryModel category = (CategoryModel) cmbCategory.getSelectedItem();
         BrandModel brand = (BrandModel) cmbBrand.getSelectedItem();
-        PeckingTypeModel peckingType = (PeckingTypeModel) cmbPeckingType.getSelectedItem();
+        PackingTypeModel peckingType = (PackingTypeModel) cmbPeckingType.getSelectedItem();
 
         // --- Validation Logic ---
         if (name.isEmpty()) {
@@ -246,7 +246,7 @@ public class FormProducts extends Form {
         if (company == null || company.getCompanyId() == 0 ||
                 category == null || category.getCategoryId() == 0 ||
                 brand == null || brand.getBrandId() == 0 ||
-                peckingType == null || peckingType.getPeckingTypeId() == 0) {
+                peckingType == null || peckingType.getPackingTypeId() == 0) {
 
             JOptionPane.showMessageDialog(this, "All four dropdown fields (Company, Category, Brand, Peeking Type) must be selected.", "Validation Error", JOptionPane.ERROR_MESSAGE);
             return;
@@ -262,7 +262,7 @@ public class FormProducts extends Form {
                     .companyId(company.getCompanyId())
                     .categoryId(category.getCategoryId())
                     .brandId(brand.getBrandId())
-                    .peckingTypeId(peckingType.getPeckingTypeId())
+                    .peckingTypeId(peckingType.getPackingTypeId())
                     .isActive(chkIsActive.isSelected())
                     .build();
 

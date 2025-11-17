@@ -9,9 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PeckingTypeModel {
-    private int peckingTypeId;
-    private String peckingTypeName;
+public class PackingTypeModel {
+    private int packingTypeId;
+    private String packingTypeName;
     private int quarterQty;
     private boolean isActive;
 }
