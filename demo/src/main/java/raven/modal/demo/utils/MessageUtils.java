@@ -9,10 +9,8 @@ public class MessageUtils{
                     "Company updated successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
             case -2 -> JOptionPane.showMessageDialog(null,
                     "Company deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-
             case -3 -> JOptionPane.showMessageDialog(null,
                     "Company name already exists!", "Duplicate", JOptionPane.WARNING_MESSAGE);
-
             case -4 -> JOptionPane.showMessageDialog(null,
                     "Company not found!", "Error", JOptionPane.ERROR_MESSAGE);
             default -> {
@@ -35,6 +33,21 @@ public class MessageUtils{
             default -> {
                 if (result > 0)
                     JOptionPane.showMessageDialog(null, "Brand added successfully!");
+                else
+                    JOptionPane.showMessageDialog(null, "Operation failed!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
+    public static void showCategoryMessage(int result) {
+        switch (result) {
+            case -1 -> JOptionPane.showMessageDialog(null, "Category updated successfully!");
+            case -2 -> JOptionPane.showMessageDialog(null, "Category deleted successfully!");
+            case -3 -> JOptionPane.showMessageDialog(null, "Category already exists!", "Duplicate", JOptionPane.WARNING_MESSAGE);
+            case -4 -> JOptionPane.showMessageDialog(null, "Category not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            default -> {
+                if (result > 0)
+                    JOptionPane.showMessageDialog(null, "Category added successfully!");
                 else
                     JOptionPane.showMessageDialog(null, "Operation failed!", "Error", JOptionPane.ERROR_MESSAGE);
             }

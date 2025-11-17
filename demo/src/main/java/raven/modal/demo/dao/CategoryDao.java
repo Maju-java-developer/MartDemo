@@ -4,6 +4,7 @@ import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -13,21 +14,68 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryDao {
+    public int addCategory(CategoryModel category) {
+        String sql = "{ CALL SP_IUD_Category(?, ?, ?, ?, ?, ?) }";
 
-    // --- CREATE/ADD Method ---
-    public void addCategory(CategoryModel category) {
-        String sql = "INSERT INTO TBLCategories (CategoryName, IsActive) VALUES (?, ?)";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, category.getCategoryName());
-            ps.setBoolean(2, category.isActive());
+            cs.setNull(1, java.sql.Types.INTEGER);
+            cs.setString(2, category.getCategoryName());
+            cs.setBoolean(3, category.isActive());
+            cs.setInt(4, 1);
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Save");
 
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Category '" + category.getCategoryName() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error saving category: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error adding category: " + e.getMessage());
         }
+        return 0;
+    }
+    public int updateCategory(CategoryModel category) {
+        String sql = "{ CALL SP_IUD_Category(?, ?, ?, ?, ?, ?) }";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, category.getCategoryId());
+            cs.setString(2, category.getCategoryName());
+            cs.setBoolean(3, category.isActive());
+            cs.setInt(4, 1);
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Update");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error updating category: " + e.getMessage());
+        }
+        return 0;
+    }
+    public int deleteCategory(int categoryId) {
+        String sql = "{ CALL SP_IUD_Category(?, ?, ?, ?, ?, ?) }";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, categoryId);
+            cs.setNull(2, java.sql.Types.VARCHAR);
+            cs.setNull(3, java.sql.Types.BOOLEAN);
+            cs.setInt(4, 1);
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Delete");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error deleting category: " + e.getMessage());
+        }
+        return 0;
     }
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
@@ -90,52 +138,6 @@ public class CategoryDao {
             // ... error handling ...
         }
         return 0;
-    }
-
-    // --- UPDATE Method ---
-    public void updateCategory(CategoryModel category) {
-        String sql = "UPDATE TBLCategories SET CategoryName=?, IsActive=? WHERE CategoryID=?";
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, category.getCategoryName());
-            ps.setBoolean(2, category.isActive());
-            ps.setInt(3, category.getCategoryId());
-
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Category ID " + category.getCategoryId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating category: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // --- DELETE Method ---
-    public void deleteCategory(int categoryId) {
-        String sql = "DELETE FROM TBLCategories WHERE CategoryID = ?";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, categoryId);
-            int rowsAffected = ps.executeUpdate();
-
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Category ID " + categoryId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, "Category ID " + categoryId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
-            }
-
-        } catch (SQLException e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null && errorMessage.contains("Cannot delete or update a parent row")) {
-                JOptionPane.showMessageDialog(null,
-                        "Deletion Failed: This category is linked to existing products or records and cannot be deleted.",
-                        "Integrity Constraint Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, "Database error while deleting category: " + errorMessage, "Database Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
     }
 
     /**

@@ -5,6 +5,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.CategoryDao;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 
 import javax.swing.*;
@@ -129,11 +130,18 @@ public class FormCategory extends Form {
 
         if (categoryId > 0) {
             categoryModel.setCategoryId(categoryId);
-            categoryDao.updateCategory(categoryModel);
+            int result = categoryDao.updateCategory(categoryModel);
+            showMessageResult(result);
         } else {
-            categoryDao.addCategory(categoryModel);
+            int result = categoryDao.addCategory(categoryModel);
+            showMessageResult(result);
         }
 
         SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    @Override
+    public void showMessageResult(int result) {
+        MessageUtils.showCategoryMessage(result);
     }
 }

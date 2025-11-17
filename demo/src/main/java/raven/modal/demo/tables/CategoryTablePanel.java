@@ -7,6 +7,7 @@ import raven.modal.demo.dao.CategoryDao;
 import raven.modal.demo.forms.FormCategory;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
@@ -157,7 +158,8 @@ public class CategoryTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        categoryDao.deleteCategory(categoryId);
+                        int result = categoryDao.deleteCategory(categoryId);
+                        MessageUtils.showCategoryMessage(result);
                         formRefresh(); // Refresh table after deletion
                     }
                 })
