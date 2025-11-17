@@ -79,8 +79,8 @@ public class BrandDao {
      * @param limit The maximum number of records to return.
      * @return List of Object[] where each array is {BrandId, BrandTitle, CompanyName, IsActive}.
      */
-    public List<Object[]> getBrandsWithCompanyName(int offset, int limit) {
-        List<Object[]> brandData = new ArrayList<>();
+    public List<BrandModel> getBrandsWithCompanyName(int offset, int limit) {
+        List<BrandModel> brandData = new ArrayList<>();
 
         // SQL JOIN query to link Brand data with the corresponding Company's name
         String sql = "SELECT b.BrandId, b.BrandTitle, c.CompanyName, b.IsActive " +
@@ -98,12 +98,12 @@ public class BrandDao {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     // Map results to an Object array for the JTable model
-                    brandData.add(new Object[]{
+                    brandData.add(new BrandModel(
                             rs.getInt("BrandId"),
                             rs.getString("BrandTitle"),
                             rs.getString("CompanyName"),
-                            rs.getBoolean("IsActive")
-                    });
+                            rs.getBoolean("IsActive"))
+                    );
                 }
             }
         } catch (SQLException e) {

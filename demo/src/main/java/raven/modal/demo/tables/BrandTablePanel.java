@@ -2,11 +2,11 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.forms.FormProducts;
-import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.BrandDao;
 import raven.modal.demo.forms.FormBrand;
+import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
@@ -14,7 +14,6 @@ import raven.swingpack.JPagination;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
@@ -120,16 +119,16 @@ public class BrandTablePanel extends Form implements TableActions {
 
         // NOTE: The DAO method here needs to fetch the CompanyName using a JOIN.
         // Assuming BrandDao has a method: getBrandsWithCompanyName(offset, limit)
-        List<Object[]> brandData = brandDao.getBrandsWithCompanyName(offset, limit);
+        List<BrandModel> brands = brandDao.getBrandsWithCompanyName(offset, limit);
         int totalBrands = brandDao.getBrandCount(); // Assuming this is implemented in BrandDao
 
-        for (Object[] row : brandData) {
+        for (BrandModel brand : brands) {
             // Row structure assumed from DAO: {BrandId, BrandTitle, CompanyName, IsActive}
             model.addRow(new Object[]{
-                    row[0], // ID
-                    row[1], // Brand Title
-                    row[2], // Company Name
-                    (boolean) row[3] ? "Active" : "Inactive" // Status
+                    brand.getBrandId(), // ID
+                    brand.getBrandTitle(), // Brand Title
+                    brand.getCompanyName(), // Company Name
+                    brand.isActive() ? "Active" : "Inactive" // Status
             });
         }
 
