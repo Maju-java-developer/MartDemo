@@ -4,32 +4,37 @@ import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class BrandDao {
 
     // --- CREATE/ADD Method ---
-    public void addBrand(BrandModel brand) {
-        String sql = "INSERT INTO TBLBrands (BrandTitle, CompanyId, IsActive) VALUES (?, ?, ?)";
+    public int addBrand(BrandModel brand) {
+        String sql = "{ CALL SP_IUD_Brand(?, ?, ?, ?, ?, ?, ?) }";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, brand.getBrandTitle());
-            ps.setInt(2, brand.getCompanyId());
-            ps.setBoolean(3, brand.isActive());
+            cs.setNull(1, java.sql.Types.INTEGER);
+            cs.setString(2, brand.getBrandTitle());
+            cs.setInt(3, brand.getCompanyId());
+            cs.setBoolean(4, brand.isActive());
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Save");
 
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Brand '" + brand.getBrandTitle() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error saving brand: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error adding brand: " + e.getMessage());
         }
+
+        return 0;
     }
+
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
     public BrandModel getBrandById(int brandId) {
@@ -56,22 +61,28 @@ public class BrandDao {
         return brand;
     }
 
-    // --- UPDATE Method ---
-    public void updateBrand(BrandModel brand) {
-        String sql = "UPDATE TBLBrands SET BrandTitle=?, CompanyId=?, IsActive=? WHERE BrandId=?";
+    public int updateBrand(BrandModel brand) {
+        String sql = "{ CALL SP_IUD_Brand(?, ?, ?, ?, ?, ?, ?) }";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, brand.getBrandTitle());
-            ps.setInt(2, brand.getCompanyId());
-            ps.setBoolean(3, brand.isActive());
-            ps.setInt(4, brand.getBrandId());
+            cs.setInt(1, brand.getBrandId());
+            cs.setString(2, brand.getBrandTitle());
+            cs.setInt(3, brand.getCompanyId());
+            cs.setBoolean(4, brand.isActive());
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Update");
 
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Brand ID " + brand.getBrandId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating brand: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error updating brand: " + e.getMessage());
         }
+
+        return 0;
     }
     /**
      * Fetches paginated brand data along with the associated Company Name.
@@ -134,42 +145,28 @@ public class BrandDao {
      * Deletes a brand record from the TBLBrands table by ID.
      * @param brandId The ID of the brand to delete.
      */
-    public void deleteBrand(int brandId) {
-        String sql = "DELETE FROM TBLBrands WHERE BrandId = ?";
+    public int deleteBrand(int brandId) {
+        String sql = "{ CALL SP_IUD_Brand(?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, brandId);
-            int rowsAffected = ps.executeUpdate();
+            cs.setInt(1, brandId);
+            cs.setNull(2, java.sql.Types.VARCHAR);
+            cs.setNull(3, java.sql.Types.INTEGER);
+            cs.setNull(4, java.sql.Types.BOOLEAN);
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Delete");
 
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null,
-                        "Brand ID " + brandId + " deleted successfully!",
-                        "Deletion Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null,
-                        "Brand ID " + brandId + " not found. No record was deleted.",
-                        "Warning",
-                        JOptionPane.WARNING_MESSAGE);
-            }
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
 
-        } catch (SQLException e) {
-            String errorMessage = e.getMessage();
-
-            if (errorMessage != null && errorMessage.contains("Cannot delete or update a parent row")) {
-                JOptionPane.showMessageDialog(null,
-                        "Deletion Failed: This brand is linked to existing products or records and cannot be deleted.",
-                        "Integrity Constraint Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null,
-                        "Database error while deleting brand: " + errorMessage,
-                        "Database Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error deleting brand: " + e.getMessage());
         }
+
+        return 0;
     }
     /**
      * Fetches Brand IDs and Titles that belong to a specific Company ID.

@@ -7,6 +7,7 @@ import raven.modal.demo.dao.CompanyDao;
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.ComboBoxUtils;
 
@@ -162,11 +163,18 @@ public class FormBrand extends Form {
 
         if (brandId > 0) {
             brandModel.setBrandId(brandId);
-            brandDao.updateBrand(brandModel);
+            int result = brandDao.updateBrand(brandModel);
+            showMessageResult(result);
         } else {
-            brandDao.addBrand(brandModel);
+            int result = brandDao.addBrand(brandModel);
+            showMessageResult(result);
         }
 
         SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    @Override
+    public void showMessageResult(int result) {
+        MessageUtils.showBrandMessage(result);
     }
 }

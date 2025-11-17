@@ -26,5 +26,19 @@ public class MessageUtils{
             }
         }
     }
+    public static void showBrandMessage(int result) {
+        switch (result) {
+            case -1 -> JOptionPane.showMessageDialog(null, "Brand updated successfully!");
+            case -2 -> JOptionPane.showMessageDialog(null, "Brand deleted successfully!");
+            case -3 -> JOptionPane.showMessageDialog(null, "Brand already exists!", "Duplicate", JOptionPane.WARNING_MESSAGE);
+            case -4 -> JOptionPane.showMessageDialog(null, "Brand not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            default -> {
+                if (result > 0)
+                    JOptionPane.showMessageDialog(null, "Brand added successfully!");
+                else
+                    JOptionPane.showMessageDialog(null, "Operation failed!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
 }

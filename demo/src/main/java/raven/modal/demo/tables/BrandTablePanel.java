@@ -7,6 +7,7 @@ import raven.modal.demo.forms.FormBrand;
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.Constants;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
@@ -109,7 +110,6 @@ public class BrandTablePanel extends Form implements TableActions {
                 new FormBrand(brandId),
                 brandId > 0 ? "Edit Brand" : "Create New Brand"
         );
-        // Refresh table after the dialog is closed (i.e., after save/update)
         formRefresh();
     }
 
@@ -117,13 +117,10 @@ public class BrandTablePanel extends Form implements TableActions {
         model.setRowCount(0);
         int offset = (page - 1) * limit;
 
-        // NOTE: The DAO method here needs to fetch the CompanyName using a JOIN.
-        // Assuming BrandDao has a method: getBrandsWithCompanyName(offset, limit)
         List<BrandModel> brands = brandDao.getBrandsWithCompanyName(offset, limit);
         int totalBrands = brandDao.getBrandCount(); // Assuming this is implemented in BrandDao
 
         for (BrandModel brand : brands) {
-            // Row structure assumed from DAO: {BrandId, BrandTitle, CompanyName, IsActive}
             model.addRow(new Object[]{
                     brand.getBrandId(), // ID
                     brand.getBrandTitle(), // Brand Title
@@ -137,9 +134,6 @@ public class BrandTablePanel extends Form implements TableActions {
         pagination.setSelectedPage(page);
         pagination.getModel().setPageRange(page, totalPages);
     }
-
-    // --- DAO Helper (Assuming this is implemented in BrandDao) ---
-    // If you need the DAO implementation for getBrandsWithCompanyName, let me know!
 
     @Override
     public void formInit() {
@@ -156,7 +150,7 @@ public class BrandTablePanel extends Form implements TableActions {
         return new ActionItem[]{
                 new ActionItem("Edit", (table1, row) -> {
                     int brandId = (int) table1.getValueAt(row, 0);
-                    openBrandFormModal(brandId); // Open modal in EDIT mode
+                    openBrandFormModal(brandId);
                 }),
                 new ActionItem("Delete", (table1, row) -> {
                     int brandId = (int) table1.getValueAt(row, 0);
@@ -166,9 +160,9 @@ public class BrandTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        // Implement delete
-                        brandDao.deleteBrand(brandId); // Assuming BrandDao has this method
-                        formRefresh(); // Refresh table after deletion
+                        int result = brandDao.deleteBrand(brandId);
+                        MessageUtils.showBrandMessage(result);
+                        formRefresh();
                     }
                 })
         };
