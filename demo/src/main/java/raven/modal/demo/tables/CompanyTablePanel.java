@@ -8,6 +8,7 @@ import raven.modal.demo.dao.UtilsDao;
 import raven.modal.demo.forms.FormCompany;
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
@@ -176,7 +177,8 @@ public class CompanyTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        companyDao.deleteCompany(companyId);
+                        int result = companyDao.deleteCompany(companyId);
+                        MessageUtils.showCompanyMessageResult(result);
                         formRefresh(); // Refresh table after deletion
                     }
                 })

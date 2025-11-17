@@ -5,6 +5,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.CompanyDao;
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 
 import javax.swing.*;
@@ -135,19 +136,23 @@ public class FormCompany extends Form {
         CompanyModel companyModel = CompanyModel.builder()
                 .companyName(txtCompanyName.getText())
                 .isActive(isActive)
-                // Other fields (ContactNo, Email, Address) will be null/default in the model,
-                // but the DAO update/insert must handle this if those columns exist in the DB.
                 .build();
 
         if (companyId > 0) {
             // EDIT Mode: Set the ID and call UPDATE
             companyModel.setCompanyId(companyId);
-            dao.updateCompany(companyModel); // Assumes DAO update handles sparse data
+            showMessageResult(dao.updateCompany(companyModel)); // Assumes DAO update handles sparse data
         } else {
             // ADD Mode: Call ADD
-            dao.addCompany(companyModel);
+            showMessageResult(dao.addCompany(companyModel));
         }
         // Close the dialog after successful save/update
         SwingUtilities.getWindowAncestor(this).dispose();
     }
+
+    @Override
+    public void showMessageResult(int result) {
+        MessageUtils.showCompanyMessageResult(result);
+    }
+
 }

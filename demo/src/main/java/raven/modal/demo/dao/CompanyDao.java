@@ -4,6 +4,7 @@ import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,23 +15,31 @@ import java.util.List;
 
 public class CompanyDao {
 
-    // --- CREATE/ADD Method (Handles only required fields from simplified form) ---
-    public void addCompany(CompanyModel company) {
-        // Only insert the two fields the simplified form provides.
-        // Other columns (ContactNo, Email, Address) must be nullable in the DB.
-        String sql = "INSERT INTO TBLCompanies (CompanyName, IsActive) VALUES (?, ?)";
+    public int addCompany(CompanyModel company) {
+        String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, company.getCompanyName());
-            ps.setBoolean(2, company.isActive());
+            cs.setNull(1, java.sql.Types.INTEGER); // CompanyID NULL for insert
+            cs.setString(2, company.getCompanyName());
+            cs.setBoolean(3, company.isActive());
+            cs.setInt(4, 1);  // CreatedBy user ID
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Save");
 
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Company '" + company.getCompanyName() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result"); // return SP result
+            }
+
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error saving company: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null,
+                    "Database error while adding company: " + e.getMessage(),
+                    "DB Error", JOptionPane.ERROR_MESSAGE);
         }
+
+        return 0;
     }
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
@@ -97,72 +106,61 @@ public class CompanyDao {
         return 0;
     }
 
-    // --- UPDATE Method (Only updates the two fields the simplified form handles) ---
-    public void updateCompany(CompanyModel company) {
-        String sql = "UPDATE TBLCompanies SET CompanyName=?, IsActive=? WHERE CompanyID=?";
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, company.getCompanyName());
-            ps.setBoolean(2, company.isActive());
-            ps.setInt(3, company.getCompanyId());
-
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Company ID " + company.getCompanyId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating company: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * Deletes a company record from the TBLCompanies table by ID.
-     * @param companyId The ID of the company to delete.
-     */
-    public void deleteCompany(int companyId) {
-        String sql = "DELETE FROM TBLCompanies WHERE CompanyID = ?";
+    public int updateCompany(CompanyModel company) {
+        String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, companyId);
+            cs.setInt(1, company.getCompanyId());
+            cs.setString(2, company.getCompanyName());
+            cs.setBoolean(3, company.isActive());
+            cs.setInt(4, 1);
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Update");
 
-            int rowsAffected = ps.executeUpdate();
-
-            if (rowsAffected > 0) {
-                // Success feedback
-                JOptionPane.showMessageDialog(null,
-                        "Company ID " + companyId + " deleted successfully!",
-                        "Deletion Success",
-                        JOptionPane.INFORMATION_MESSAGE);
-                System.out.println("DAO: Company ID " + companyId + " deleted successfully.");
-            } else {
-                // Warning if no row was found (e.g., already deleted)
-                JOptionPane.showMessageDialog(null,
-                        "Company ID " + companyId + " not found. No record was deleted.",
-                        "Warning",
-                        JOptionPane.WARNING_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result");
             }
 
         } catch (SQLException e) {
-            String errorMessage = e.getMessage();
-
-            // Check for Foreign Key Constraint violation (most common delete error)
-            if (errorMessage != null && errorMessage.contains("Cannot delete or update a parent row")) {
-                JOptionPane.showMessageDialog(null,
-                        "Deletion Failed: This company is linked to existing transactions or records (e.g., invoices, products, or users) and cannot be deleted.",
-                        "Integrity Constraint Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                // General database error
-                JOptionPane.showMessageDialog(null,
-                        "Database error while deleting company: " + errorMessage,
-                        "Database Error",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-            System.err.println("Database error during deleteCompany: " + errorMessage);
+            JOptionPane.showMessageDialog(null,
+                    "Database error while updating company: " + e.getMessage(),
+                    "DB Error", JOptionPane.ERROR_MESSAGE);
         }
+
+        return 0;
     }
+
+
+    public int deleteCompany(int companyId) {
+        String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, companyId);
+            cs.setNull(2, java.sql.Types.VARCHAR);
+            cs.setNull(3, java.sql.Types.BOOLEAN);
+            cs.setInt(4, 1);
+            cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(6, "Delete");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result");
+            }
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null,
+                    "Database error while deleting company: " + e.getMessage(),
+                    "DB Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        return 0;
+    }
+
     // --- HELPER METHOD: Get Active Companies for Dropdown ---
     /**
      * Fetches only active Company IDs and Names to populate a JComboBox.
