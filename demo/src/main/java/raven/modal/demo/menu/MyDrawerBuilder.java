@@ -12,8 +12,10 @@ package raven.modal.demo.menu;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
+import lombok.Getter;
 import raven.extras.AvatarIcon;
 import raven.modal.demo.Demo;
+import raven.modal.demo.forms.FormBackupRestore;
 import raven.modal.demo.forms.FormCustomer;
 import raven.modal.demo.forms.FormProducts;
 import raven.modal.demo.forms.FormPurchase;
@@ -57,11 +59,16 @@ import java.util.Arrays;
  * user info integration, and menu validation.
  * 
  * @author Majid.Hussain
- * @date 13-11-2025
+ * @since 13-11-2025
  */
 public class MyDrawerBuilder extends SimpleDrawerBuilder {
 
     private static MyDrawerBuilder instance;
+    /**
+     * -- GETTER --
+     *  Get current ModelUser.
+     */
+    @Getter
     private ModelUser user;
 
     /**
@@ -74,15 +81,6 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
             instance = new MyDrawerBuilder();
         }
         return instance;
-    }
-
-    /**
-     * Get current ModelUser.
-     *
-     * @return the current user
-     */
-    public ModelUser getUser() {
-        return user;
     }
 
     /**
@@ -198,7 +196,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         // create simple menu option
         MenuOption simpleMenuOption = new MenuOption();
 
-        MenuItem items[] = new MenuItem[]{
+        MenuItem[] items = new MenuItem[]{
                 new Item.Label("MAIN"),
 //                new Item("Dashboard", "dashboard.svg", FormDashboard.class),
                 new Item("Purchase", "purchases.svg")
@@ -222,6 +220,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         .subMenu( new Item("Product")
                                 .subMenu("Add Product", FormProducts.class)
                                 .subMenu("View All Products", ProductTablePanel.class)),
+                new Item( "Backup Manager", "setting.svg", FormBackupRestore.class),
                 new Item("Logout", "logout.svg")
         };
 
@@ -239,8 +238,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 boolean isTopLevel = index.length == 1;
                 if (isTopLevel) {
                     // adjust item menu at the top level because it's contain icon
-                    menu.putClientProperty(FlatClientProperties.STYLE, "" +
-                            "margin:-1,0,-1,0;");
+                    menu.putClientProperty(FlatClientProperties.STYLE, "margin:-1,0,-1,0;");
                 }
             }
 
@@ -274,7 +272,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                     action.consume();
                     FormManager.showAbout();
                     return;
-                } else if (i == 5) {
+                } else if (i == 6) {
                     action.consume();
                     FormManager.logout();
                     return;
@@ -351,8 +349,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
      * @return style string for drawer background
      */
     private static String getDrawerBackgroundStyle() {
-        return "" +
-                "[light]background:tint($Panel.background,20%);" +
+        return "[light]background:tint($Panel.background,20%);" +
                 "[dark]background:tint($Panel.background,5%);";
     }
 }
