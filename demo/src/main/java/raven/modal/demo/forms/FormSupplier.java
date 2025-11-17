@@ -177,8 +177,32 @@ public class FormSupplier extends Form {
             // Close the modal window upon success
             SwingUtilities.getWindowAncestor(this).dispose();
         } else {
-            supplierDao.addSupplier(supplierModel);
-            JOptionPane.showMessageDialog(this, supplierId > 0 ? "Vendor updated successfully!" : "Vendor added successfully!");
+            int result = supplierDao.addSupplier(supplierModel);
+            showMessageResult(result);
+        }
+    }
+
+    @Override
+    public void showMessageResult(int result) {
+        if (result > 0) {
+            JOptionPane.showMessageDialog(this, "Vendor added successfully!");
+            clearForm();
+        }
+        else if (result == -1) {
+            JOptionPane.showMessageDialog(this, "Vendor updated successfully!");
+            clearForm();
+        }
+        else if (result == -2) {
+            JOptionPane.showMessageDialog(this, "Vendor deleted successfully!");
+        }
+        else if (result == -3) {
+            JOptionPane.showMessageDialog(this, "Vendor already exists!", "Duplicate Vendor", JOptionPane.WARNING_MESSAGE);
+        }
+        else if (result == -4) {
+            JOptionPane.showMessageDialog(this, "Vendor not found!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        else {
+            JOptionPane.showMessageDialog(this, "Operation failed! Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 }

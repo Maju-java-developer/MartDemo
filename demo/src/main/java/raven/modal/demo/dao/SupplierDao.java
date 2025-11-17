@@ -4,6 +4,7 @@ import raven.modal.demo.model.SupplierModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -125,65 +126,88 @@ public class SupplierDao {
         }
         return list;
     }
-    public boolean updateSupplier(SupplierModel supplier) {
-        String sql = "UPDATE TBLSuppliers SET SupplierName=?, ContactNo=?, Email=?, Address=?, OpeningBalance=? WHERE SupplierID=?";
+
+    public int updateSupplier(SupplierModel supplier) {
+        String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, supplier.getSupplierName());
-            ps.setString(2, supplier.getContactNo());
-            ps.setString(3, supplier.getEmail());
-            ps.setString(4, supplier.getAddress());
-            ps.setDouble(5, supplier.getOpeningBalance());
-            ps.setInt(6, supplier.getSupplierID());
+            cs.setInt(1, supplier.getSupplierID());
+            cs.setString(2, supplier.getSupplierName());
+            cs.setString(3, supplier.getContactNo());
+            cs.setString(4, supplier.getAddress());
+            cs.setString(5, supplier.getEmail());
+            cs.setDouble(6, supplier.getOpeningBalance());
+            cs.setInt(7, 1);
+            cs.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
+            cs.setString(9, "Update");
 
-            return ps.executeUpdate() > 0;
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result");
+            }
+
         } catch (SQLException e) {
             handleSqlError(e, "updating vendor");
-            return false;
         }
+        return 0;
     }
 
-    // --- DELETE Method ---
-    public boolean deleteSupplier(int supplierId) {
-        String sql = "DELETE FROM TBLSuppliers WHERE SupplierID = ?";
+    public int deleteSupplier(int supplierId) {
+        String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, supplierId);
-            return ps.executeUpdate() > 0;
+            cs.setInt(1, supplierId);
+            cs.setNull(2, java.sql.Types.VARCHAR);
+            cs.setNull(3, java.sql.Types.VARCHAR);
+            cs.setNull(4, java.sql.Types.VARCHAR);
+            cs.setNull(5, java.sql.Types.VARCHAR);
+            cs.setNull(6, java.sql.Types.DOUBLE);
+            cs.setInt(7, 1);
+            cs.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
+            cs.setString(9, "Delete");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result");
+            }
 
         } catch (SQLException e) {
             handleSqlError(e, "deleting vendor");
-            return false;
         }
+        return 0;
     }
 
-    // --- Existing ADD Method (Modified to return boolean) ---
-    public boolean addSupplier(SupplierModel supplier) {
-        // NOTE: SQL statement must match your TBLSuppliers schema
-        String sql = "INSERT INTO TBLSuppliers (SupplierName, ContactNo, Email, Address, OpeningBalance, CreatedDate) VALUES (?, ?, ?, ?, ?, ?)";
+    public int addSupplier(SupplierModel supplier) {
+        String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, supplier.getSupplierName());
-            ps.setString(2, supplier.getContactNo());
-            ps.setString(3, supplier.getEmail());
-            ps.setString(4, supplier.getAddress());
-            ps.setDouble(5, supplier.getOpeningBalance());
-            ps.setTimestamp(6, Timestamp.valueOf(LocalDateTime.now())); // Use current time
+            cs.setNull(1, java.sql.Types.INTEGER); // VendorID for save
+            cs.setString(2, supplier.getSupplierName());
+            cs.setString(3, supplier.getContactNo());
+            cs.setString(4, supplier.getAddress());
+            cs.setString(5, supplier.getEmail());
+            cs.setDouble(6, supplier.getOpeningBalance());
+            cs.setInt(7, 1);                     // UserID
+            cs.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
+            cs.setString(9, "Save");
 
-            return ps.executeUpdate() > 0;
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("Result");  // returns new ID or -3 (duplicate)
+            }
+
         } catch (SQLException e) {
-            handleSqlError(e, "saving vendor");
-            return false;
+            handleSqlError(e, "adding vendor");
         }
+        return 0;
     }
 
-
-    // --- Centralized Error Handler ---
     private void handleSqlError(SQLException e, String action) {
         String errorMessage = e.getMessage();
         System.err.println("Database error during " + action + ": " + errorMessage);

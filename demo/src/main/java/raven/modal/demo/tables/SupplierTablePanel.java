@@ -173,7 +173,7 @@ public class SupplierTablePanel extends Form implements TableActions{
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        if (supplierDao.deleteSupplier(supplierId)) { // Call DAO delete
+                        if (supplierDao.deleteSupplier(supplierId) == -2) { // Call DAO delete
                             JOptionPane.showMessageDialog(table1, "Vendor deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
                             formRefresh();
                         }
