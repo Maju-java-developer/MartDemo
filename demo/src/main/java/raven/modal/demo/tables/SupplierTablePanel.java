@@ -28,7 +28,7 @@ public class SupplierTablePanel extends Form implements TableActions{
     private SupplierDao supplierDao = new SupplierDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = 10;
+    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate; // Added standard create button
 
     public SupplierTablePanel() {

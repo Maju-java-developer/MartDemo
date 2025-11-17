@@ -18,5 +18,6 @@ public class Constants {
             DISCOUNT_TYPE_FIXED
     };
     public static final double DEFAULT_GST_RATE = 0.0;
+    public static final int LIMIT_PER_PAGE = 10;
 
 }

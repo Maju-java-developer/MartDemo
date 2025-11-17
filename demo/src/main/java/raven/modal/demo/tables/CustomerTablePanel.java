@@ -27,7 +27,7 @@ public class CustomerTablePanel extends Form implements TableActions{
     private CustomerDao customerDao = new CustomerDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = 10;
+    private int limit = Constants.LIMIT_PER_PAGE;
 
     public CustomerTablePanel() {
         initUI();

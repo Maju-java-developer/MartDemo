@@ -29,7 +29,7 @@ public class ProductTablePanel extends Form implements TableActions {
     private ProductDao productDao = new ProductDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = 10; // Items per page
+    private int limit = Constants.LIMIT_PER_PAGE; // Items per page
 
     public ProductTablePanel() {
         initUI();

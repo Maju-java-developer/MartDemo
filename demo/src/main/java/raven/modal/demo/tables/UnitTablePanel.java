@@ -7,6 +7,7 @@ import raven.modal.demo.dao.UtilsDao;
 import raven.modal.demo.forms.FormUnits;
 import raven.modal.demo.model.UnitModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
@@ -25,7 +26,7 @@ public class UnitTablePanel extends Form implements TableActions {
     private UnitDao unitDao; // Placeholder
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = 10;
+    private int limit = Constants.LIMIT_PER_PAGE;
 
     public UnitTablePanel() {
         unitDao = new UnitDao();

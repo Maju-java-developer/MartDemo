@@ -26,7 +26,7 @@ public class CategoryTablePanel extends Form implements TableActions {
     private CategoryDao categoryDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = 10;
+    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
     public CategoryTablePanel() {
