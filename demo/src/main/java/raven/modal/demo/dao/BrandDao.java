@@ -90,38 +90,37 @@ public class BrandDao {
      * @param limit The maximum number of records to return.
      * @return List of Object[] where each array is {BrandId, BrandTitle, CompanyName, IsActive}.
      */
-    public List<BrandModel> getBrandsWithCompanyName(int offset, int limit) {
-        List<BrandModel> brandData = new ArrayList<>();
+    public List<BrandModel> getAllBrands(int offset, int limit) {
+        List<BrandModel> brands = new ArrayList<>();
 
-        // SQL JOIN query to link Brand data with the corresponding Company's name
-        String sql = "SELECT b.BrandId, b.BrandTitle, c.CompanyName, b.IsActive " +
-                "FROM TBLBrands b " +
-                "JOIN TBLCompanies c ON b.CompanyId = c.CompanyID " +
-                "ORDER BY b.BrandTitle " +
-                "LIMIT ? OFFSET ?";
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            cs.setInt(1, 0);                  // p_Id
+            cs.setInt(2, limit);              // p_DisplayLength (Your limit)
+            cs.setInt(3, offset);             // p_DisplayStart (Your offset)
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
+            cs.setString(5, "BrandList");     // p_ListBy (REQUIRED)
+            cs.setInt(6, 0);                  // p_UserID
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
-                    // Map results to an Object array for the JTable model
-                    brandData.add(new BrandModel(
-                            rs.getInt("BrandId"),
-                            rs.getString("BrandTitle"),
-                            rs.getString("CompanyName"),
-                            rs.getBoolean("IsActive"))
-                    );
+                    // Columns from the SP's 'BrandList' branch (b.BrandId, b.BrandTitle, c.CompanyName, b.IsActive)
+                    brands.add(BrandModel.builder()
+                            .brandId(rs.getInt("BrandId"))
+                            .brandTitle(rs.getString("BrandTitle"))
+                            .companyName(rs.getString("CompanyName"))
+                            .isActive(rs.getBoolean("IsActive"))
+                            .build());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Database error fetching brands with company name: " + e.getMessage());
-            // In a real application, proper logging would be used here.
+            JOptionPane.showMessageDialog(null, "Error fetching company: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
-        return brandData;
+        return brands;
     }
 
     /**

@@ -65,22 +65,26 @@ public class CompanyDao {
         return company;
     }
 
-    // --- READ/FETCH All Records (For Table Panel) ---
     public List<CompanyModel> getAllCompanies(int offset, int limit) {
         List<CompanyModel> companies = new ArrayList<>();
-        // Select only the columns needed for the simplified table view (ID, Name, Status)
-        String sql = "SELECT c.CompanyID, c.CompanyName, c.IsActive FROM TBLCompanies" +
-                " c where c.IsActive = true LIMIT ? OFFSET ?";
+
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            cs.setInt(1, 0);                  // p_Id
+            cs.setInt(2, limit);              // p_DisplayLength
+            cs.setInt(3, offset);             // p_DisplayStart
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            cs.setString(5, "CompanyList");   // p_ListBy
+            cs.setInt(6, 0);                  // p_UserID
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     companies.add(CompanyModel.builder()
+                            // Columns from the SP's 'CompanyList' branch
                             .companyId(rs.getInt("CompanyID"))
                             .companyName(rs.getString("CompanyName"))
                             .isActive(rs.getBoolean("IsActive"))
@@ -92,7 +96,6 @@ public class CompanyDao {
         }
         return companies;
     }
-
     // --- READ/FETCH Count (For Pagination) ---
     public int getCompanyCount() {
         String sql = "SELECT COUNT(*) FROM TBLCompanies c where c.IsActive = true ";

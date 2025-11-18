@@ -117,31 +117,42 @@ public class CustomerDao {
         return 0;
     }
     public List<CustomerModel> getAllCustomers(int offset, int limit) {
-        List<CustomerModel> list = new ArrayList<>();
-        String sql = "SELECT * FROM tblcustomers ORDER BY CustomerId LIMIT ? OFFSET ?";
+        List<CustomerModel> customers = new ArrayList<>();
+
+        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             // 🔴 CHANGE 2: Use CallableStatement
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            // --- Map SP Parameters ---
+            cs.setInt(1, 0);                  // p_Id
+            cs.setInt(2, limit);              // p_DisplayLength (Your limit)
+            cs.setInt(3, offset);             // p_DisplayStart (Your offset)
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
+            cs.setString(5, "CustomerList");  // p_ListBy (REQUIRED)
+            cs.setInt(6, 0);                  // p_UserID
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) {
-                CustomerModel customer = new CustomerModel();
-                customer.setCustomerId(rs.getInt("CustomerId"));
-                customer.setCustomerName(rs.getString("CustomerName"));
-                customer.setContactNo(rs.getString("ContactNo"));
-                customer.setAddress(rs.getString("address"));
-                customer.setEmail(rs.getString("email"));
-                customer.setOpeningBalance(rs.getDouble("OpeningBalance"));
-                customer.setTaxPer(rs.getDouble("TaxPer"));
-                list.add(customer);
+            try (ResultSet rs = cs.executeQuery()) {
+                while (rs.next()) {
+                    customers.add(CustomerModel.builder()
+                            .customerId(rs.getInt("CustomerID"))
+                            .customerName(rs.getString("CustomerName"))
+                            .contactNo(rs.getString("ContactNo"))
+                            .address(rs.getString("Address"))
+                            .email(rs.getString("Email"))
+                            .openingBalance(rs.getDouble("OpeningBalance"))
+                            .build());
+                }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage());
         }
-        return list;
+        return customers;
     }
+
     public CustomerModel getCustomerById(int customerId) {
         String sql = "SELECT CustomerID, CustomerName, ContactNo, Email, Address, OpeningBalance, TaxPer, City FROM TBLCustomers WHERE CustomerID = ?";
         CustomerModel customer = null;

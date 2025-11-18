@@ -117,7 +117,7 @@ public class BrandTablePanel extends Form implements TableActions {
         model.setRowCount(0);
         int offset = (page - 1) * limit;
 
-        List<BrandModel> brands = brandDao.getBrandsWithCompanyName(offset, limit);
+        List<BrandModel> brands = brandDao.getAllBrands(offset, limit);
         int totalBrands = brandDao.getBrandCount(); // Assuming this is implemented in BrandDao
 
         for (BrandModel brand : brands) {

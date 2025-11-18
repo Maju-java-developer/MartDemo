@@ -4,6 +4,7 @@ import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -94,38 +95,32 @@ public class ProductDao {
     public List<ProductModel> getAllProducts(int offset, int limit) {
         List<ProductModel> products = new ArrayList<>();
 
-        String sql =
-                "SELECT " +
-                        "p.ProductID, " +
-                        "p.ProductCode, " +
-                        "p.ProductName, " +
-                        "c.CompanyName, " +
-                        "b.BrandTitle AS BrandName, " +
-                        "cat.CategoryName, " +
-                        "pk.PackingTypeName, " +
-                        "p.IsActive " +
-                        "FROM TBLProducts p " +
-                        "LEFT JOIN TBLBrands b ON p.BrandId = b.BrandId " +
-                        "LEFT JOIN TBLCompanies c ON b.CompanyId = c.CompanyId " +
-                        "LEFT JOIN TBLCategories cat ON p.CategoryId = cat.CategoryId " +
-                        "LEFT JOIN TBLPackingType pk ON p.PackingTypeId = pk.PackingTypeId " +
-                        "WHERE p.IsActive = TRUE " +
-                        "LIMIT ? OFFSET ?;";
+        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             // 🔴 CHANGE 2: Use CallableStatement
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            // --- Map SP Parameters ---
+            cs.setInt(1, 0);                 // p_Id (Unused for list)
+            cs.setInt(2, limit);             // p_DisplayLength (Your limit)
+            cs.setInt(3, offset);            // p_DisplayStart (Your offset)
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
+            cs.setString(5, "ProductList");  // p_ListBy (REQUIRED)
+            cs.setInt(6, 0);                 // p_UserID (Unused)
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime (Unused)
 
-            try (ResultSet rs = ps.executeQuery()) {
+
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     ProductModel product = ProductModel.builder()
                             .productId(rs.getInt("ProductID"))
                             .productCode(rs.getString("ProductCode"))
                             .productName(rs.getString("ProductName"))
+                            // All these columns are returned by the SP's 'ProductList' branch
                             .companyName(rs.getString("CompanyName"))
-                            .brandName(rs.getString("BrandName"))
+                            .brandName(rs.getString("BrandTitle")) // Note: BrandTitle is returned, not BrandName
                             .categoryName(rs.getString("CategoryName"))
                             .peckingTypeName(rs.getString("PackingTypeName"))
                             .build();
@@ -134,17 +129,10 @@ public class ProductDao {
             }
 
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null,
-                    "Database error while fetching products: " + e.getMessage(),
-                    "Database Error",
-                    JOptionPane.ERROR_MESSAGE);
-            System.err.println("Database error during getAllProducts: " + e.getMessage());
-            e.printStackTrace();
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage());
         }
-
         return products;
     }
-
 
     /**
      * Inserts a new product record into TBLProducts.

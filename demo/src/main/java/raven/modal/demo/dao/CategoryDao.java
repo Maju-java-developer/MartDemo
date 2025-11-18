@@ -101,20 +101,29 @@ public class CategoryDao {
         return category;
     }
 
-    // --- READ/FETCH All Records (For Table Panel) ---
     public List<CategoryModel> getAllCategories(int offset, int limit) {
         List<CategoryModel> categories = new ArrayList<>();
-        String sql = "SELECT CategoryID, CategoryName, IsActive FROM TBLCategories where IsActive = true LIMIT ? OFFSET ?";
+
+        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             // 🔴 CHANGE 2: Use CallableStatement
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            // --- Map SP Parameters ---
+            cs.setInt(1, 0);                 // p_Id (Unused for list)
+            cs.setInt(2, limit);             // p_DisplayLength (Your limit)
+            cs.setInt(3, offset);            // p_DisplayStart (Your offset)
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL since no search logic in Java method)
+            cs.setString(5, "CategoryList"); // p_ListBy (REQUIRED)
+            cs.setInt(6, 0);                 // p_UserID (Unused)
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime (Unused)
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     categories.add(CategoryModel.builder()
+                            // The columns remain the same
                             .categoryId(rs.getInt("CategoryID"))
                             .categoryName(rs.getString("CategoryName"))
                             .isActive(rs.getBoolean("IsActive"))
@@ -122,7 +131,7 @@ public class CategoryDao {
                 }
             }
         } catch (SQLException e) {
-            // ... error handling ...
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage());
         }
         return categories;
     }
@@ -135,7 +144,7 @@ public class CategoryDao {
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) {
-            // ... error handling ...
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage());
         }
         return 0;
     }

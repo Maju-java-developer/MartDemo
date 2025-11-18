@@ -43,37 +43,6 @@ public class SupplierDao {
         }
         return suppliers;
     }
-    /**
-     * Updates the OutstandingBalance for a supplier based on a new transaction.
-     * OutstandingBalance is INCREASED by the Purchase Total and DECREASED by the Paid Amount.
-     *
-     * @param supplierId The ID of the supplier.
-     * @param totalAmount The final Total Amount of the purchase (debt added).
-     * @param paidAmount The amount paid at the time of purchase (debt reduced).
-     * @return true if the update was successful.
-     */
-    public boolean updateSupplierBalance(int supplierId, double totalAmount, double paidAmount) {
-        // The purchase increases the supplier's balance (liability/debt).
-        // The paid amount decreases the supplier's balance.
-        double netChange = totalAmount - paidAmount;
-
-        // SQL: Update the balance by adding the net change (Total - Paid).
-        String sql = "UPDATE TBLSuppliers SET OpeningBalance = OpeningBalance + ? WHERE SupplierID = ?";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setDouble(1, netChange);
-            ps.setInt(2, supplierId);
-
-            return ps.executeUpdate() > 0;
-
-        } catch (SQLException e) {
-            System.err.println("Database error updating supplier balance: " + e.getMessage());
-            JOptionPane.showMessageDialog(null, "Error updating supplier ledger balance.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-    }
 
     // ✅ Get suppliers with pagination
     public List<SupplierModel> getActiveSuppliersForDropdown() {
@@ -101,16 +70,27 @@ public class SupplierDao {
 
     public List<SupplierModel> getSuppliers(int offset, int limit) {
         List<SupplierModel> list = new ArrayList<>();
-        String sql = "SELECT * FROM TBLSuppliers ORDER BY SupplierID LIMIT ? OFFSET ?";
+
+        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             // 🔴 CHANGE 2: Use CallableStatement
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            // --- Map SP Parameters ---
+            cs.setInt(1, 0);                  // p_Id
+            cs.setInt(2, limit);              // p_DisplayLength
+            cs.setInt(3, offset);             // p_DisplayStart
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            cs.setString(5, "VendorList");    // p_ListBy (Mapping to TBLSuppliers)
+            cs.setInt(6, 0);                  // p_UserID
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     SupplierModel model = new SupplierModel();
+                    // Columns remain the same as the SP SELECTS V.* (all columns)
                     model.setSupplierID(rs.getInt("SupplierID"));
                     model.setSupplierName(rs.getString("SupplierName"));
                     model.setContactNo(rs.getString("ContactNo"));
@@ -126,7 +106,6 @@ public class SupplierDao {
         }
         return list;
     }
-
     public int updateSupplier(SupplierModel supplier) {
         String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 

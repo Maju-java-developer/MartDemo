@@ -84,9 +84,6 @@ public class PackingTypeDao {
 
         return 0;
     }
-
-
-    // --- READ/FETCH Single Record Method (For Edit Form) ---
     public PackingTypeModel getPackingTypeById(int typeId) {
         String sql = "SELECT PackingTypeId, PackingTypeName, cartonQty, IsActive FROM TBLPackingType WHERE PackingTypeId = ?";
         PackingTypeModel type = null;
@@ -112,15 +109,24 @@ public class PackingTypeDao {
 
     public List<PackingTypeModel> getAllPackingTypes(int offset, int limit) {
         List<PackingTypeModel> types = new ArrayList<>();
-        String sql = "SELECT PackingTypeId, PackingTypeName, cartonQty, IsActive FROM TBLPackingType WHERE IsActive = TRUE LIMIT ? OFFSET ?";
+
+        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
+        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             // 🔴 CHANGE 2: Use CallableStatement
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            // --- Map SP Parameters ---
+            cs.setInt(1, 0);                  // p_Id
+            cs.setInt(2, limit);              // p_DisplayLength
+            cs.setInt(3, offset);             // p_DisplayStart
+            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            cs.setString(5, "PackingTypeList");// p_ListBy
+            cs.setInt(6, 0);                  // p_UserID
+            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     types.add(PackingTypeModel.builder()
                             .packingTypeId(rs.getInt("PackingTypeId"))
@@ -131,12 +137,11 @@ public class PackingTypeDao {
                 }
             }
         } catch (SQLException e) {
-            // ... error handling ...
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage());
         }
         return types;
     }
 
-    // --- READ/FETCH Count (For Pagination) ---
     public int getPackingTypeCount() {
         String sql = "SELECT COUNT(*) FROM TBLPackingType p where p.isActive = true";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
