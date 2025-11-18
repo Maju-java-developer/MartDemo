@@ -386,7 +386,7 @@ public class FormSale extends Form implements TableActions {
                 String.format("%.2f", netPrice),
                 "Action Placeholder",
                 selectedProduct.getProductId(),
-                selectedProduct.getPeckingTypeId()
+                selectedProduct.getPackingTypeId()
         });
 
         // Clear and update

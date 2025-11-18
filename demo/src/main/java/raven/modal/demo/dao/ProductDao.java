@@ -23,9 +23,9 @@ public class ProductDao {
      */
     public List<ProductModel> searchActiveProducts(String query) {
         // NOTE: Need to fetch PeckingTypeId and UnitID for quantity calculation
-        String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PeckingTypeId, pt.quarterQty as UnitPerCarton " +
+        String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PackingTypeId, pt.cartonQty as UnitPerCarton " +
                 "FROM TBLProducts p " +
-                "JOIN TBLPeckingType pt ON p.PeckingTypeId = pt.PeekingTypeId " + // Join to get units per carton
+                "JOIN TBLPackingType pt ON p.PackingTypeId = pt.PackingTypeId " + // Join to get units per carton
                 "WHERE p.IsActive = TRUE AND (p.ProductName LIKE ? OR p.ProductCode LIKE ?) LIMIT 10";
 
         List<ProductModel> products = new ArrayList<>();
@@ -43,7 +43,7 @@ public class ProductDao {
                             .productId(rs.getInt("ProductID"))
                             .productCode(rs.getString("ProductCode"))
                             .productName(rs.getString("ProductName"))
-                            .peckingTypeId(rs.getInt("PeckingTypeId"))
+                            .packingTypeId(rs.getInt("PeckingTypeId"))
                             .unitsPerCarton(rs.getInt("UnitPerCarton")) // Assumed field in ProductModel/PeckingType
                             .build());
                 }
@@ -60,9 +60,9 @@ public class ProductDao {
      * @return List of all active ProductModel objects (ID, Code, Name, UnitsPerCarton).
      */
     public List<ProductModel> getAllActiveProducts() {
-        String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PeckingTypeId, pt.quarterQty as UnitPerCarton " +
+        String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PackingTypeId, pt.cartonQty as UnitPerCarton " +
                 "FROM TBLProducts p " +
-                "JOIN TBLPeckingType pt ON p.PeckingTypeId = pt.PeekingTypeId " +
+                "JOIN TBLPackingType pt ON p.PackingTypeId = pt.PackingTypeId " +
                 "WHERE p.IsActive = TRUE ORDER BY p.ProductName ASC";
 
         List<ProductModel> products = new ArrayList<>();
@@ -76,7 +76,7 @@ public class ProductDao {
                         .productId(rs.getInt("ProductID"))
                         .productCode(rs.getString("ProductCode"))
                         .productName(rs.getString("ProductName"))
-                        .peckingTypeId(rs.getInt("PeckingTypeId"))
+                        .packingTypeId(rs.getInt("PackingTypeId"))
                         .unitsPerCarton(rs.getInt("UnitPerCarton"))
                         .build());
             }
@@ -102,13 +102,13 @@ public class ProductDao {
                         "c.CompanyName, " +
                         "b.BrandTitle AS BrandName, " +
                         "cat.CategoryName, " +
-                        "pk.PeekingTypeName, " +
+                        "pk.PackingTypeName, " +
                         "p.IsActive " +
                         "FROM TBLProducts p " +
                         "LEFT JOIN TBLBrands b ON p.BrandId = b.BrandId " +
                         "LEFT JOIN TBLCompanies c ON b.CompanyId = c.CompanyId " +
                         "LEFT JOIN TBLCategories cat ON p.CategoryId = cat.CategoryId " +
-                        "LEFT JOIN TBLPeckingType pk ON p.PeckingTypeId = pk.PeekingTypeId " +
+                        "LEFT JOIN TBLPackingType pk ON p.PackingTypeId = pk.PackingTypeId " +
                         "WHERE p.IsActive = TRUE " +
                         "LIMIT ? OFFSET ?;";
 
@@ -127,7 +127,7 @@ public class ProductDao {
                             .companyName(rs.getString("CompanyName"))
                             .brandName(rs.getString("BrandName"))
                             .categoryName(rs.getString("CategoryName"))
-                            .peckingTypeName(rs.getString("PeekingTypeName"))
+                            .peckingTypeName(rs.getString("PackingTypeName"))
                             .build();
                     products.add(product);
                 }
@@ -152,7 +152,7 @@ public class ProductDao {
      */
     public void addProduct(ProductModel product) {
         // SQL must match the 7 fields being inserted (excluding ProductID)
-        String sql = "INSERT INTO TBLProducts (ProductCode, ProductName, IsActive, BrandId, CategoryId, PeckingTypeId, CompanyId) "
+        String sql = "INSERT INTO TBLProducts (ProductCode, ProductName, IsActive, BrandId, CategoryId, PackingTypeId, CompanyId) "
                 + "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
@@ -164,7 +164,7 @@ public class ProductDao {
             ps.setBoolean(3, product.isActive());
             ps.setInt(4, product.getBrandId());
             ps.setInt(5, product.getCategoryId());
-            ps.setInt(6, product.getPeckingTypeId());
+            ps.setInt(6, product.getPackingTypeId());
             ps.setInt(7, product.getCompanyId());
 
             // 2. Execute the update
@@ -195,7 +195,7 @@ public class ProductDao {
      */
     public void updateProduct(ProductModel product) {
         // SQL must update 7 fields, filtering by ProductID (8 parameters)
-        String sql = "UPDATE TBLProducts SET ProductCode=?, ProductName=?, IsActive=?, BrandId=?, CategoryId=?, PeckingTypeId=?, CompanyId=? "
+        String sql = "UPDATE TBLProducts SET ProductCode=?, ProductName=?, IsActive=?, BrandId=?, CategoryId=?, PackingTypeId=?, CompanyId=? "
                 + "WHERE ProductID=?";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
@@ -207,7 +207,7 @@ public class ProductDao {
             ps.setBoolean(3, product.isActive());
             ps.setInt(4, product.getBrandId());
             ps.setInt(5, product.getCategoryId());
-            ps.setInt(6, product.getPeckingTypeId());
+            ps.setInt(6, product.getPackingTypeId());
             ps.setInt(7, product.getCompanyId());
 
             // 2. Set the WHERE clause ID
@@ -240,7 +240,7 @@ public class ProductDao {
      * @return The ProductModel or null if not found.
      */
     public ProductModel getProductById(int productId) {
-        String sql = "SELECT ProductID, ProductCode, ProductName, IsActive, BrandId, CategoryId, PeckingTypeId, CompanyId "
+        String sql = "SELECT ProductID, ProductCode, ProductName, IsActive, BrandId, CategoryId, PackingTypeId, CompanyId "
                 + "FROM TBLProducts WHERE ProductID = ?";
         ProductModel product = null;
 
@@ -257,7 +257,7 @@ public class ProductDao {
                             .isActive(rs.getBoolean("IsActive"))
                             .brandId(rs.getInt("BrandId"))
                             .categoryId(rs.getInt("CategoryId"))
-                            .peckingTypeId(rs.getInt("PeckingTypeId"))
+                            .packingTypeId(rs.getInt("PackingTypeId"))
                             .companyId(rs.getInt("CompanyId"))
                             .build();
                 }

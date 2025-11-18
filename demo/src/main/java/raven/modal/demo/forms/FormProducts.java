@@ -199,7 +199,7 @@ public class FormProducts extends Form {
 
             // Set Category/PeekingType
             ComboBoxUtils.setComboBoxSelection(cmbCategory, product.getCategoryId(), CategoryModel::getCategoryId);
-            ComboBoxUtils.setComboBoxSelection(cmbPackingType, product.getPeckingTypeId(), PackingTypeModel::getPackingTypeId);
+            ComboBoxUtils.setComboBoxSelection(cmbPackingType, product.getPackingTypeId(), PackingTypeModel::getPackingTypeId);
 
             // Set Company (this must happen first to load the correct Brands)
             CompanyModel selectedCompany = ComboBoxUtils.setComboBoxSelection(cmbCompany, product.getCompanyId(), CompanyModel::getCompanyId);
@@ -262,7 +262,7 @@ public class FormProducts extends Form {
                     .companyId(company.getCompanyId())
                     .categoryId(category.getCategoryId())
                     .brandId(brand.getBrandId())
-                    .peckingTypeId(peckingType.getPackingTypeId())
+                    .packingTypeId(peckingType.getPackingTypeId())
                     .isActive(chkIsActive.isSelected())
                     .build();
 

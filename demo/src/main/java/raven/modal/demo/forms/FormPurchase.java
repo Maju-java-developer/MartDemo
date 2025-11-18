@@ -394,7 +394,7 @@ public class FormPurchase extends Form implements TableActions {
                 String.format("%.2f", totalRowPrice),
                 "Action Placeholder", // Action column
                 selectedProduct.getProductId(), // Hidden ID
-                selectedProduct.getPeckingTypeId() // Hidden ID
+                selectedProduct.getPackingTypeId() // Hidden ID
         });
 
         // Clear row input fields

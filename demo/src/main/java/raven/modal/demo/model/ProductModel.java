@@ -15,7 +15,7 @@ public class ProductModel {
     private String productName;
     private int brandId;         // New field
     private int categoryId;      // New field
-    private int peckingTypeId;   // New field (PeekingTypeId in DAO)
+    private int packingTypeId;   // New field (PeekingTypeId in DAO)
     private int companyId;       // New field
     private boolean isActive = true;
     private String brandName;
