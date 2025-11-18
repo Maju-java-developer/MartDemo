@@ -21,18 +21,18 @@ public class PackingTypeDao {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, type.getPackingTypeName());
-            ps.setInt(2, type.getQuarterQty());
+            ps.setInt(2, type.getCartonQty());
             ps.setBoolean(3, type.isActive());
 
             ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Pecking Type '" + type.getPackingTypeName() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Packing Type '" + type.getPackingTypeName() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error saving Pecking Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Database error saving Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
-    public PackingTypeModel getPeckingTypeById(int typeId) {
+    public PackingTypeModel getPackingTypeById(int typeId) {
         String sql = "SELECT PeekingTypeId, PeekingTypeName, quarterQty, IsActive FROM TBLPeckingType WHERE PeekingTypeId = ?";
         PackingTypeModel type = null;
         try (Connection conn = MySQLConnection.getInstance().getConnection();
@@ -44,18 +44,18 @@ public class PackingTypeDao {
                     type = PackingTypeModel.builder()
                             .packingTypeId(rs.getInt("PeekingTypeId"))
                             .packingTypeName(rs.getString("PeekingTypeName"))
-                            .quarterQty(rs.getInt("quarterQty"))
+                            .cartonQty(rs.getInt("quarterQty"))
                             .isActive(rs.getBoolean("IsActive"))
                             .build();
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error fetching Pecking Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error fetching Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
         return type;
     }
 
-    public List<PackingTypeModel> getAllPeckingTypes(int offset, int limit) {
+    public List<PackingTypeModel> getAllPackingTypes(int offset, int limit) {
         List<PackingTypeModel> types = new ArrayList<>();
         String sql = "SELECT PeekingTypeId, PeekingTypeName, quarterQty, IsActive FROM TBLPeckingType WHERE IsActive = TRUE LIMIT ? OFFSET ?";
 
@@ -70,7 +70,7 @@ public class PackingTypeDao {
                     types.add(PackingTypeModel.builder()
                             .packingTypeId(rs.getInt("PeekingTypeId"))
                             .packingTypeName(rs.getString("PeekingTypeName"))
-                            .quarterQty(rs.getInt("quarterQty"))
+                            .cartonQty(rs.getInt("quarterQty"))
                             .isActive(rs.getBoolean("IsActive"))
                             .build());
                 }
@@ -82,14 +82,14 @@ public class PackingTypeDao {
     }
 
     // --- READ/FETCH Count (For Pagination) ---
-    public int getPeckingTypeCount() {
+    public int getPackingTypeCount() {
         String sql = "SELECT COUNT(*) FROM TBLPeckingType p where p.isActive = true";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             if (rs.next()) return rs.getInt(1);
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating Pecking Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Database error updating Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
         return 0;
     }
@@ -100,14 +100,14 @@ public class PackingTypeDao {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, type.getPackingTypeName());
-            ps.setInt(2, type.getQuarterQty());
+            ps.setInt(2, type.getCartonQty());
             ps.setBoolean(3, type.isActive());
             ps.setInt(4, type.getPackingTypeId());
 
             ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Pecking Type ID " + type.getPackingTypeId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Packing Type ID " + type.getPackingTypeId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating Pecking Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Database error updating Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -122,20 +122,20 @@ public class PackingTypeDao {
             int rowsAffected = ps.executeUpdate();
 
             if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Pecking Type ID " + typeId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Packing Type ID " + typeId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(null, "Pecking Type ID " + typeId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Packing Type ID " + typeId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
             }
 
         } catch (SQLException e) {
             String errorMessage = e.getMessage();
             if (errorMessage != null && errorMessage.contains("Cannot delete or update a parent row")) {
                 JOptionPane.showMessageDialog(null,
-                        "Deletion Failed: This Pecking Type is linked to other records and cannot be deleted.",
+                        "Deletion Failed: This Packing Type is linked to other records and cannot be deleted.",
                         "Integrity Constraint Error",
                         JOptionPane.ERROR_MESSAGE);
             } else {
-                JOptionPane.showMessageDialog(null, "Database error while deleting Pecking Type: " + errorMessage, "Database Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Database error while deleting Packing Type: " + errorMessage, "Database Error", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -144,12 +144,12 @@ public class PackingTypeDao {
      * Includes a placeholder item.
      * @return List of PeekingTypeModel containing only ID and Name.
      */
-    public List<PackingTypeModel> getActivePeekingTypesForDropdown() {
+    public List<PackingTypeModel> getActivePackingTypesForDropdown() {
         String sql = "SELECT PeekingTypeId, PeekingTypeName FROM TBLPeckingType WHERE IsActive = TRUE ORDER BY PeekingTypeName";
         List<PackingTypeModel> types = new ArrayList<>();
 
         // Add a placeholder/default item
-        types.add(PackingTypeModel.builder().packingTypeId(0).packingTypeName("--- Select Pecking Type ---").build());
+        types.add(PackingTypeModel.builder().packingTypeId(0).packingTypeName("--- Select Packing Type ---").build());
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              Statement st = conn.createStatement();

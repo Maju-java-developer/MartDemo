@@ -17,7 +17,7 @@ import javax.swing.table.DefaultTableModel;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Pecking Types", description = "Manage system Pecking type definitions", tags = {"Pecking", "table"})
+@SystemForm(name = "Packing Types", description = "Manage system Packing type definitions", tags = {"Packing", "table"})
 public class PackingTypeTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -31,22 +31,22 @@ public class PackingTypeTablePanel extends Form implements TableActions {
     public PackingTypeTablePanel() {
         PackingTypeDao = new PackingTypeDao();
         initUI();
-        loadPeckingTypes(1);
+        loadPackingTypes(1);
     }
 
     private void initUI() {
         setLayout(new MigLayout("fillx,wrap,insets 15 0 10 0", "[fill]", "[][][fill,grow][]"));
 
-        JLabel title = new JLabel("Pecking Type List");
+        JLabel title = new JLabel("Packing Type List");
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");
         add(title, "gapx 20");
 
         // --- Control Panel (Includes Create Button) ---
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
 
-        btnCreate = new JButton("Create Pecking Type");
+        btnCreate = new JButton("Create Packing Type");
         btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
-        btnCreate.addActionListener(e -> openPeckingTypeFormModal(0));
+        btnCreate.addActionListener(e -> openPackingTypeFormModal(0));
 
         controlPanel.add(new JPanel(), "growx");
         controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
@@ -92,7 +92,7 @@ public class PackingTypeTablePanel extends Form implements TableActions {
 
         // Pagination Panel
         pagination = new JPagination(11, 1, 1);
-        pagination.addChangeListener(e -> loadPeckingTypes(pagination.getSelectedPage()));
+        pagination.addChangeListener(e -> loadPackingTypes(pagination.getSelectedPage()));
         JPanel pagePanel = new JPanel(new MigLayout("insets 5 15 5 15", "[][]push[]"));
         lbTotal = new JLabel("0");
         pagePanel.add(new JLabel("Total:"));
@@ -102,27 +102,27 @@ public class PackingTypeTablePanel extends Form implements TableActions {
     }
 
     // --- MODAL DIALOG METHOD ---
-    private void openPeckingTypeFormModal(int typeId) {
+    private void openPackingTypeFormModal(int typeId) {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormPackingType(typeId),
-                typeId > 0 ? "Edit Pecking Type" : "Create New Pecking Type"
+                typeId > 0 ? "Edit Packing Type" : "Create New Packing Type"
         );
         formRefresh();
     }
 
-    private void loadPeckingTypes(int page) {
+    private void loadPackingTypes(int page) {
         model.setRowCount(0);
         int offset = (page - 1) * limit;
 
-        List<PackingTypeModel> types = PackingTypeDao.getAllPeckingTypes(offset, limit);
-        int totalTypes = PackingTypeDao.getPeckingTypeCount();
+        List<PackingTypeModel> types = PackingTypeDao.getAllPackingTypes(offset, limit);
+        int totalTypes = PackingTypeDao.getPackingTypeCount();
 
         for (PackingTypeModel typeModel : types) {
             model.addRow(new Object[]{
                     typeModel.getPackingTypeId(),
                     typeModel.getPackingTypeName(),
-                    typeModel.getQuarterQty(),
+                    typeModel.getCartonQty(),
                     typeModel.isActive() ? "Active" : "Inactive"
             });
         }
@@ -135,12 +135,12 @@ public class PackingTypeTablePanel extends Form implements TableActions {
 
     @Override
     public void formInit() {
-        loadPeckingTypes(1);
+        loadPackingTypes(1);
     }
 
     @Override
     public void formRefresh() {
-        loadPeckingTypes(pagination.getSelectedPage());
+        loadPackingTypes(pagination.getSelectedPage());
     }
 
     @Override
@@ -148,13 +148,13 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         return new ActionItem[]{
                 new ActionItem("Edit", (table1, row) -> {
                     int typeId = (int) table1.getValueAt(row, 0);
-                    openPeckingTypeFormModal(typeId);
+                    openPackingTypeFormModal(typeId);
                 }),
                 new ActionItem("Delete", (table1, row) -> {
                     int typeId = (int) table1.getValueAt(row, 0);
                     String typeName = table1.getValueAt(row, 1).toString();
                     int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete Pecking Type: " + typeName + "?",
+                            "Are you sure you want to delete Packing Type: " + typeName + "?",
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {

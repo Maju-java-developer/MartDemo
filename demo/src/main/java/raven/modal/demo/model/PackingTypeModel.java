@@ -12,6 +12,6 @@ import lombok.NoArgsConstructor;
 public class PackingTypeModel {
     private int packingTypeId;
     private String packingTypeName;
-    private int quarterQty;
+    private int cartonQty;
     private boolean isActive;
 }

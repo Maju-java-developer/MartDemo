@@ -27,7 +27,7 @@ public class FormProducts extends Form {
     private JTextField txtProductCode, txtProductName;
     private JComboBox<CompanyModel> cmbCompany;
     private JComboBox<CategoryModel> cmbCategory;
-    private JComboBox<PackingTypeModel> cmbPeckingType;
+    private JComboBox<PackingTypeModel> cmbPackingType;
     private JComboBox<BrandModel> cmbBrand; // Dependent dropdown
 
     private JCheckBox chkIsActive;
@@ -92,8 +92,8 @@ public class FormProducts extends Form {
         cmbCategory.setModel(new DefaultComboBoxModel<>(categories.toArray(new CategoryModel[0])));
 
         // Load PeekingType (adjust method name as per your DAO)
-        List<PackingTypeModel> types = peekingTypeDao.getActivePeekingTypesForDropdown();
-        cmbPeckingType.setModel(new DefaultComboBoxModel<>(types.toArray(new PackingTypeModel[0])));
+        List<PackingTypeModel> types = peekingTypeDao.getActivePackingTypesForDropdown();
+        cmbPackingType.setModel(new DefaultComboBoxModel<>(types.toArray(new PackingTypeModel[0])));
 
         // Load Brand (initially loaded empty or with placeholder, updated by cmbCompany listener)
         updateBrandDropdown(0); // Load default placeholder initially
@@ -101,7 +101,7 @@ public class FormProducts extends Form {
         // Set up renderers for clarity (similarly to FormBrand)
         ComboBoxUtils.setupComboBoxRenderer(cmbCompany, m -> ((CompanyModel)m).getCompanyName());
         ComboBoxUtils.setupComboBoxRenderer(cmbCategory, m -> ((CategoryModel)m).getCategoryName());
-        ComboBoxUtils.setupComboBoxRenderer(cmbPeckingType, m -> ((PackingTypeModel) m).getPackingTypeName());
+        ComboBoxUtils.setupComboBoxRenderer(cmbPackingType, m -> ((PackingTypeModel) m).getPackingTypeName());
         ComboBoxUtils.setupComboBoxRenderer(cmbBrand, m -> ((BrandModel)m).getBrandTitle());
     }
 
@@ -132,7 +132,7 @@ public class FormProducts extends Form {
         txtProductName = new JTextField();
         cmbCompany = new JComboBox<>();
         cmbCategory = new JComboBox<>();
-        cmbPeckingType = new JComboBox<>();
+        cmbPackingType = new JComboBox<>();
         cmbBrand = new JComboBox<>();
         chkIsActive = new JCheckBox("Product is Active", true);
 
@@ -157,7 +157,7 @@ public class FormProducts extends Form {
         panel.add(cmbCategory);
 
         panel.add(new JLabel("Pecking Type *:"));
-        panel.add(cmbPeckingType);
+        panel.add(cmbPackingType);
 
         // Row 4: Status (Span two columns)
         panel.add(new JLabel("Status:"));
@@ -199,7 +199,7 @@ public class FormProducts extends Form {
 
             // Set Category/PeekingType
             ComboBoxUtils.setComboBoxSelection(cmbCategory, product.getCategoryId(), CategoryModel::getCategoryId);
-            ComboBoxUtils.setComboBoxSelection(cmbPeckingType, product.getPeckingTypeId(), PackingTypeModel::getPackingTypeId);
+            ComboBoxUtils.setComboBoxSelection(cmbPackingType, product.getPeckingTypeId(), PackingTypeModel::getPackingTypeId);
 
             // Set Company (this must happen first to load the correct Brands)
             CompanyModel selectedCompany = ComboBoxUtils.setComboBoxSelection(cmbCompany, product.getCompanyId(), CompanyModel::getCompanyId);
@@ -224,7 +224,7 @@ public class FormProducts extends Form {
         txtProductName.setText("");
         cmbCompany.setSelectedIndex(0);
         cmbCategory.setSelectedIndex(0);
-        cmbPeckingType.setSelectedIndex(0);
+        cmbPackingType.setSelectedIndex(0);
         // Note: cmbBrand will be updated by cmbCompany's listener
         chkIsActive.setSelected(true);
     }
@@ -234,7 +234,7 @@ public class FormProducts extends Form {
         CompanyModel company = (CompanyModel) cmbCompany.getSelectedItem();
         CategoryModel category = (CategoryModel) cmbCategory.getSelectedItem();
         BrandModel brand = (BrandModel) cmbBrand.getSelectedItem();
-        PackingTypeModel peckingType = (PackingTypeModel) cmbPeckingType.getSelectedItem();
+        PackingTypeModel peckingType = (PackingTypeModel) cmbPackingType.getSelectedItem();
 
         // --- Validation Logic ---
         if (name.isEmpty()) {

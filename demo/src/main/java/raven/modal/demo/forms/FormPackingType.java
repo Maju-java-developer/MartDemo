@@ -28,7 +28,7 @@ public class FormPackingType extends Form {
         this.PeckingTypeId = PeckingTypeId;
         init();
         if (this.PeckingTypeId > 0) {
-            loadPeckingTypeData(this.PeckingTypeId);
+            loadPackingTypeData(this.PeckingTypeId);
         }
     }
 
@@ -109,12 +109,12 @@ public class FormPackingType extends Form {
         return buttonPanel;
     }
 
-    private void loadPeckingTypeData(int id) {
-        PackingTypeModel type = PackingTypeDao.getPeckingTypeById(id);
+    private void loadPackingTypeData(int id) {
+        PackingTypeModel type = PackingTypeDao.getPackingTypeById(id);
 
         if (type != null) {
             txtTypeName.setText(type.getPackingTypeName());
-            txtQuarterQty.setText(String.valueOf(type.getQuarterQty()));
+            txtQuarterQty.setText(String.valueOf(type.getCartonQty()));
             cmbIsActive.setSelectedItem(type.isActive() ? "Active" : "Inactive");
             titleLabel.setText("Edit Pecking Type: " + type.getPackingTypeName());
         } else {
@@ -156,7 +156,7 @@ public class FormPackingType extends Form {
 
         PackingTypeModel typeModel = PackingTypeModel.builder()
                 .packingTypeName(name)
-                .quarterQty(quarterQty)
+                .cartonQty(quarterQty)
                 .isActive(isActive)
                 .build();
 

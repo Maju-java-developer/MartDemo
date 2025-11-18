@@ -214,7 +214,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                 new Item("Setting", "setting.svg")
                         .subMenu("Company", CompanyTablePanel.class)
                         .subMenu("Category", CategoryTablePanel.class)
-                        .subMenu("Pecking Type", PackingTypeTablePanel.class)
+                        .subMenu("Packing Type", PackingTypeTablePanel.class)
                         .subMenu("Brand", BrandTablePanel.class)
                         .subMenu( new Item("Product")
                                 .subMenu("Add Product", FormProducts.class)
