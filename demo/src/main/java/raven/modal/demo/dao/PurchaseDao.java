@@ -5,12 +5,14 @@ import raven.modal.demo.model.PurchaseModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -123,10 +125,10 @@ public class PurchaseDao {
             }
 
             // 2. Fetch Detail Data (Line Items)
-            String sqlDetails = "SELECT pd.*, p.ProductName, pt.quarterQty as UnitPerCarton " +
+            String sqlDetails = "SELECT pd.*, p.ProductName, pt.cartonQty as UnitPerCarton " +
                     "FROM TBLPurchaseDetail pd " +
                     "JOIN TBLProducts p ON pd.ProductID = p.ProductID " +
-                    "JOIN TBLPeckingType pt ON p.PeckingTypeId = pt.PeekingTypeId " +
+                    "JOIN TBLPackingType pt ON p.packingTypeId = pt.packingTypeId " +
                     "WHERE pd.PurchaseID = ?";
 
             try (PreparedStatement psDetails = conn.prepareStatement(sqlDetails)) {
@@ -153,122 +155,120 @@ public class PurchaseDao {
         }
         return purchase;
     }
-// Assuming the necessary helper method exists in PurchaseDao:
-    // private void updateProductStock(Connection conn, int productId, double quantityChange) throws SQLException
 
-    public boolean savePurchase(PurchaseModel purchaseModel) {
-        String sqlPurchase = "INSERT INTO TBLPurchase (SupplierID, PurchaseDate, InvoiceNo, TotalAmount, PaidAmount, Remarks, CreatedDate) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public boolean savePurchase(PurchaseModel purchaseModel, int currentUserId) {
+
+        String sqlHeader = "{CALL SP_IUD_Purchase(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
         String sqlDetail = "INSERT INTO TBLPurchaseDetail (PurchaseID, ProductID, Quantity, Rate, Total) VALUES (?, ?, ?, ?, ?)";
-        String sqlStock = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyIn, Rate) VALUES (?, 'PURCHASE', ?, ?, ?, ?)";
+        String sqlStock  = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyIn, Rate) VALUES (?, 'PURCHASE', ?, ?, ?, ?)";
 
         Connection conn = null;
+
         try {
             conn = MySQLConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false);
 
-            // 1. Insert Purchase Header
-            PreparedStatement psPurchase = conn.prepareStatement(sqlPurchase, Statement.RETURN_GENERATED_KEYS);
-            Timestamp currentTimestamp = Timestamp.valueOf(LocalDateTime.now());
+            CallableStatement cs = conn.prepareCall(sqlHeader);
 
-            psPurchase.setInt(1, purchaseModel.getSupplierID());
-            psPurchase.setTimestamp(2, Timestamp.valueOf(purchaseModel.getPurchaseDate()));
-            psPurchase.setString(3, purchaseModel.getInvoiceNo());
-            psPurchase.setDouble(4, purchaseModel.getTotalAmount());
-            psPurchase.setDouble(5, purchaseModel.getPaidAmount());
-            psPurchase.setString(6, purchaseModel.getRemarks());
-            psPurchase.setTimestamp(7, currentTimestamp);
+            // 1 ─ p_PurchaseID (INOUT)
+            cs.setNull(1, Types.INTEGER);
+            cs.registerOutParameter(1, Types.INTEGER);
 
-            psPurchase.executeUpdate();
+            // 2 ─ SupplierID
+            cs.setInt(2, purchaseModel.getSupplierID());
 
-            // Get generated PurchaseID
-            int purchaseId = 0;
-            ResultSet rs = psPurchase.getGeneratedKeys();
-            if (rs.next()) {
-                purchaseId = rs.getInt(1);
-            } else {
+            // 3 ─ PurchaseDate
+            cs.setTimestamp(3, Timestamp.valueOf(purchaseModel.getPurchaseDate()));
+
+            // 4 ─ InvoiceNo (INOUT)
+            cs.setNull(4, Types.VARCHAR);
+            cs.registerOutParameter(4, Types.VARCHAR);
+
+            // 5-10 fields
+            cs.setDouble(5, purchaseModel.getActualAmount());
+            cs.setString(6, purchaseModel.getDiscountType());
+            cs.setDouble(7, purchaseModel.getDiscountValue());
+            cs.setDouble(8, purchaseModel.getTotalAmount());
+            cs.setDouble(9, purchaseModel.getPaidAmount());
+            cs.setString(10, purchaseModel.getRemarks());
+
+            // 11 datetime
+            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
+            cs.setTimestamp(11, now);
+
+            // 12 UserID
+            cs.setInt(12, currentUserId);
+
+            // 13 Status
+            cs.setString(13, "Save");
+
+            // 14 ReturnID (OUT)
+            cs.registerOutParameter(14, Types.INTEGER);
+
+            cs.executeUpdate();
+
+            // Read out params
+            int purchaseId = cs.getInt(1);
+            String invoiceNo = cs.getString(4);
+            int resultCode = cs.getInt(14);
+
+            if (resultCode <= 0) {
                 conn.rollback();
-                JOptionPane.showMessageDialog(null, "Failed to retrieve Purchase ID.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null,
+                        "Error: Stored procedure returned failure!",
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
 
-            // 2. Insert Purchase Details and Update Stock
+            // ========== INSERT DETAILS AND STOCK ==========
             PreparedStatement psDetail = conn.prepareStatement(sqlDetail, Statement.RETURN_GENERATED_KEYS);
             PreparedStatement psStock = conn.prepareStatement(sqlStock);
 
             for (PurchaseDetailModel detail : purchaseModel.getDetails()) {
-                // A. Insert Purchase Detail
+
+                // Insert detail
                 psDetail.setInt(1, purchaseId);
                 psDetail.setInt(2, detail.getProductID());
                 psDetail.setDouble(3, detail.getQuantity());
                 psDetail.setDouble(4, detail.getRate());
                 psDetail.setDouble(5, detail.getTotal());
-                psDetail.executeUpdate(); // Execute immediately to get the ID
+                psDetail.executeUpdate();
 
-                int purchaseDetailsId;
-                try (ResultSet rs1 = psDetail.getGeneratedKeys()) {
-                    if (rs1.next()) {
-                        purchaseDetailsId = rs1.getInt(1);
-                    } else {
-                        // Crucial: Throwing exception forces rollback
-                        throw new SQLException("Failed to retrieve Purchase Detail ID.");
-                    }
+                int detailId;
+                try (ResultSet rs = psDetail.getGeneratedKeys()) {
+                    if (rs.next()) detailId = rs.getInt(1);
+                    else throw new SQLException("Failed to get PurchaseDetailID.");
                 }
 
-                // B. Insert Stock Ledger Entry (QtyIn)
+                // Insert stock
                 psStock.setInt(1, detail.getProductID());
                 psStock.setInt(2, purchaseId);
-                psStock.setInt(3, purchaseDetailsId);
-                psStock.setDouble(4, detail.getQuantity()); // QtyIn
+                psStock.setInt(3, detailId);
+                psStock.setDouble(4, detail.getQuantity());
                 psStock.setDouble(5, detail.getRate());
-                // FIX: Execute immediately after setting parameters, don't use executeBatch here
-                if(psStock.executeUpdate() == 0) {
-                    throw new SQLException("Failed to insert stock ledger entry for Product ID: " + detail.getProductID());
-                }
-
-                // C. Update TBLProducts.CurrentStock (Adds quantity)
-//                updateProductStock(conn, detail.getProductID(), detail.getQuantity());
+                psStock.executeUpdate();
             }
 
-            // 3. Update Supplier Balance
-            double totalAmount = purchaseModel.getTotalAmount();
-            double paidAmount = purchaseModel.getPaidAmount();
-            int supplierId = purchaseModel.getSupplierID();
+            conn.commit();
+            JOptionPane.showMessageDialog(null,
+                    "Purchase Saved Successfully! \nID: " + purchaseId + "\nInvoice: " + invoiceNo,
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
 
-            double netChange = totalAmount - paidAmount;
-
-            String sqlBalance = "UPDATE TBLSuppliers SET OpeningBalance = OpeningBalance + ? WHERE SupplierID = ?";
-            try (PreparedStatement psBalance = conn.prepareStatement(sqlBalance)) {
-                psBalance.setDouble(1, netChange);
-                psBalance.setInt(2, supplierId);
-
-                if (psBalance.executeUpdate() == 0) {
-                    throw new SQLException("Failed to update supplier outstanding balance.");
-                }
-            }
-
-            conn.commit(); // Commit transaction
-            JOptionPane.showMessageDialog(null, "Purchase transaction saved successfully! ID: " + purchaseId, "Success", JOptionPane.INFORMATION_MESSAGE);
             return true;
 
-        } catch (SQLException e) {
-            try {
-                if (conn != null) conn.rollback(); // Rollback on error
-            } catch (SQLException rollbackEx) {
-                System.err.println("Rollback failed: " + rollbackEx.getMessage());
-            }
-            System.err.println("Database error during savePurchase: " + e.getMessage());
-            JOptionPane.showMessageDialog(null, "Database error: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+
+            try { if (conn != null) conn.rollback(); } catch (Exception ignore) {}
+
+            JOptionPane.showMessageDialog(null,
+                    "Database Error: " + e.getMessage(),
+                    "Error", JOptionPane.ERROR_MESSAGE);
             return false;
+
         } finally {
-            try {
-                if (conn != null) conn.setAutoCommit(true); // Restore auto-commit
-            } catch (SQLException closeEx) {
-                // Ignore
-            }
+            try { if (conn != null) conn.setAutoCommit(true); } catch (Exception ignore) {}
         }
     }
-
     /**
      * Fetches a paginated list of Purchase header records, including the Supplier name.
      * @param offset Starting point of the records.

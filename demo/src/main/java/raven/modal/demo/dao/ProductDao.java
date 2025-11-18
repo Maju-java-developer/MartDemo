@@ -20,10 +20,10 @@ public class ProductDao {
      * Searches for active products by name or code, limited to 10 results.
      * Used for the auto-suggest feature in the purchase form.
      * @param query The search string.
-     * @return List of ProductModel (ID, Code, Name, PeckingTypeId, UnitID).
+     * @return List of ProductModel (ID, Code, Name, PackingTypeName, UnitID).
      */
     public List<ProductModel> searchActiveProducts(String query) {
-        // NOTE: Need to fetch PeckingTypeId and UnitID for quantity calculation
+        // NOTE: Need to fetch PackingTypeName and UnitID for quantity calculation
         String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PackingTypeId, pt.cartonQty as UnitPerCarton " +
                 "FROM TBLProducts p " +
                 "JOIN TBLPackingType pt ON p.PackingTypeId = pt.PackingTypeId " + // Join to get units per carton
@@ -44,7 +44,7 @@ public class ProductDao {
                             .productId(rs.getInt("ProductID"))
                             .productCode(rs.getString("ProductCode"))
                             .productName(rs.getString("ProductName"))
-                            .packingTypeId(rs.getInt("PeckingTypeId"))
+                            .packingTypeId(rs.getInt("PackingTypeId"))
                             .unitsPerCarton(rs.getInt("UnitPerCarton")) // Assumed field in ProductModel/PeckingType
                             .build());
                 }

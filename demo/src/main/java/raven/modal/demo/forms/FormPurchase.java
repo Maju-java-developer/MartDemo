@@ -475,7 +475,7 @@ public class FormPurchase extends Form implements TableActions {
             // Close the form/dialog
             SwingUtilities.getWindowAncestor(this).dispose();
         } else {
-            purchaseDao.savePurchase(purchaseModel);
+            purchaseDao.savePurchase(purchaseModel, 1); // todo set user id here after ending
             clearForm();
         }
 
