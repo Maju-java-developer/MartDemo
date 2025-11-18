@@ -53,5 +53,19 @@ public class MessageUtils{
             }
         }
     }
+    public static void showPackingTypeMessage(int result) {
+        switch (result) {
+            case -1 -> JOptionPane.showMessageDialog(null, "Packing Type updated successfully!");
+            case -2 -> JOptionPane.showMessageDialog(null, "Packing Type deleted successfully!");
+            case -3 -> JOptionPane.showMessageDialog(null, "Packing Type already exists!", "Duplicate", JOptionPane.WARNING_MESSAGE);
+            case -4 -> JOptionPane.showMessageDialog(null, "Packing Type not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            default -> {
+                if (result > 0)
+                    JOptionPane.showMessageDialog(null, "Packing Type added successfully!");
+                else
+                    JOptionPane.showMessageDialog(null, "Operation failed!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
 }

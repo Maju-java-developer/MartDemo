@@ -7,6 +7,7 @@ import raven.modal.demo.dao.PackingTypeDao;
 import raven.modal.demo.forms.FormPackingType;
 import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
@@ -158,7 +159,8 @@ public class PackingTypeTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        PackingTypeDao.deletePackingType(typeId);
+                        int result = PackingTypeDao.deletePackingType(typeId);
+                        MessageUtils.showPackingTypeMessage(result);
                         formRefresh();
                     }
                 })

@@ -5,6 +5,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.PackingTypeDao;
 import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 
@@ -162,11 +163,18 @@ public class FormPackingType extends Form {
 
         if (PeckingTypeId > 0) {
             typeModel.setPackingTypeId(PeckingTypeId);
-            PackingTypeDao.updatePackingType(typeModel);
+            int result = PackingTypeDao.updatePackingType(typeModel);
+            showMessageResult(result);
         } else {
-            PackingTypeDao.addPackingType(typeModel);
+            int result = PackingTypeDao.addPackingType(typeModel);
+            showMessageResult(result);
         }
 
         SwingUtilities.getWindowAncestor(this).dispose();
+    }
+
+    @Override
+    public void showMessageResult(int result) {
+        MessageUtils.showPackingTypeMessage(result);
     }
 }

@@ -4,6 +4,7 @@ import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.mysql.MySQLConnection;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -14,26 +15,80 @@ import java.util.List;
 
 public class PackingTypeDao {
 
-    // --- CREATE/ADD Method ---
-    public void addPackingType(PackingTypeModel type) {
-        String sql = "INSERT INTO TBLPeckingType (PeekingTypeName, quarterQty, IsActive) VALUES (?, ?, ?)";
+    public int addPackingType(PackingTypeModel type) {
+        String sql = "{ CALL SP_IUD_PackingType(?, ?, ?, ?, ?, ?, ?) }";
+
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setString(1, type.getPackingTypeName());
-            ps.setInt(2, type.getCartonQty());
-            ps.setBoolean(3, type.isActive());
+            cs.setNull(1, java.sql.Types.INTEGER);
+            cs.setString(2, type.getPackingTypeName());      // title
+            cs.setInt(3, type.getCartonQty());                // cartonQty
+            cs.setBoolean(4, type.isActive());
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Save");
 
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Packing Type '" + type.getPackingTypeName() + "' saved successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error saving Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error saving packing type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
         }
+
+        return 0;
     }
+    public int updatePackingType(PackingTypeModel type) {
+        String sql = "{ CALL SP_IUD_PackingType(?, ?, ?, ?, ?, ?, ?) }";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, type.getPackingTypeId());
+            cs.setString(2, type.getPackingTypeName());
+            cs.setInt(3, type.getCartonQty());
+            cs.setBoolean(4, type.isActive());
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Update");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error updating packing type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        return 0;
+    }
+    public int deletePackingType(int id) {
+        String sql = "{ CALL SP_IUD_PackingType(?, ?, ?, ?, ?, ?, ?) }";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, id);
+            cs.setNull(2, java.sql.Types.VARCHAR);
+            cs.setNull(3, java.sql.Types.INTEGER);
+            cs.setNull(4, java.sql.Types.BOOLEAN);
+            cs.setInt(5, 1);
+            cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
+            cs.setString(7, "Delete");
+
+            ResultSet rs = cs.executeQuery();
+            if (rs.next()) return rs.getInt("Result");
+
+        } catch (SQLException e) {
+            JOptionPane.showMessageDialog(null, "Error deleting packing type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+        }
+
+        return 0;
+    }
+
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
     public PackingTypeModel getPackingTypeById(int typeId) {
-        String sql = "SELECT PeekingTypeId, PeekingTypeName, quarterQty, IsActive FROM TBLPeckingType WHERE PeekingTypeId = ?";
+        String sql = "SELECT PackingTypeId, PackingTypeName, cartonQty, IsActive FROM TBLPackingType WHERE PackingTypeId = ?";
         PackingTypeModel type = null;
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -42,9 +97,9 @@ public class PackingTypeDao {
             try (ResultSet rs = ps.executeQuery()) {
                 if (rs.next()) {
                     type = PackingTypeModel.builder()
-                            .packingTypeId(rs.getInt("PeekingTypeId"))
-                            .packingTypeName(rs.getString("PeekingTypeName"))
-                            .cartonQty(rs.getInt("quarterQty"))
+                            .packingTypeId(rs.getInt("PackingTypeId"))
+                            .packingTypeName(rs.getString("PackingTypeName"))
+                            .cartonQty(rs.getInt("cartonQty"))
                             .isActive(rs.getBoolean("IsActive"))
                             .build();
                 }
@@ -57,7 +112,7 @@ public class PackingTypeDao {
 
     public List<PackingTypeModel> getAllPackingTypes(int offset, int limit) {
         List<PackingTypeModel> types = new ArrayList<>();
-        String sql = "SELECT PeekingTypeId, PeekingTypeName, quarterQty, IsActive FROM TBLPeckingType WHERE IsActive = TRUE LIMIT ? OFFSET ?";
+        String sql = "SELECT PackingTypeId, PackingTypeName, cartonQty, IsActive FROM TBLPackingType WHERE IsActive = TRUE LIMIT ? OFFSET ?";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -68,9 +123,9 @@ public class PackingTypeDao {
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
                     types.add(PackingTypeModel.builder()
-                            .packingTypeId(rs.getInt("PeekingTypeId"))
-                            .packingTypeName(rs.getString("PeekingTypeName"))
-                            .cartonQty(rs.getInt("quarterQty"))
+                            .packingTypeId(rs.getInt("PackingTypeId"))
+                            .packingTypeName(rs.getString("PackingTypeName"))
+                            .cartonQty(rs.getInt("cartonQty"))
                             .isActive(rs.getBoolean("IsActive"))
                             .build());
                 }
@@ -83,7 +138,7 @@ public class PackingTypeDao {
 
     // --- READ/FETCH Count (For Pagination) ---
     public int getPackingTypeCount() {
-        String sql = "SELECT COUNT(*) FROM TBLPeckingType p where p.isActive = true";
+        String sql = "SELECT COUNT(*) FROM TBLPackingType p where p.isActive = true";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
              Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -94,58 +149,13 @@ public class PackingTypeDao {
         return 0;
     }
 
-    public void updatePackingType(PackingTypeModel type) {
-        String sql = "UPDATE TBLPeckingType SET PeekingTypeName=?, quarterQty=?, IsActive=? WHERE PeekingTypeId=?";
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, type.getPackingTypeName());
-            ps.setInt(2, type.getCartonQty());
-            ps.setBoolean(3, type.isActive());
-            ps.setInt(4, type.getPackingTypeId());
-
-            ps.executeUpdate();
-            JOptionPane.showMessageDialog(null, "Packing Type ID " + type.getPackingTypeId() + " updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
-        } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Database error updating Packing Type: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    // --- DELETE Method ---
-    public void deletePackingType(int typeId) {
-        String sql = "DELETE FROM TBLPeckingType WHERE PeekingTypeId = ?";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, typeId);
-            int rowsAffected = ps.executeUpdate();
-
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(null, "Packing Type ID " + typeId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, "Packing Type ID " + typeId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
-            }
-
-        } catch (SQLException e) {
-            String errorMessage = e.getMessage();
-            if (errorMessage != null && errorMessage.contains("Cannot delete or update a parent row")) {
-                JOptionPane.showMessageDialog(null,
-                        "Deletion Failed: This Packing Type is linked to other records and cannot be deleted.",
-                        "Integrity Constraint Error",
-                        JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null, "Database error while deleting Packing Type: " + errorMessage, "Database Error", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
     /**
      * Fetches only active PeekingType IDs and Names to populate a JComboBox.
      * Includes a placeholder item.
      * @return List of PeekingTypeModel containing only ID and Name.
      */
     public List<PackingTypeModel> getActivePackingTypesForDropdown() {
-        String sql = "SELECT PeekingTypeId, PeekingTypeName FROM TBLPeckingType WHERE IsActive = TRUE ORDER BY PeekingTypeName";
+        String sql = "SELECT PackingTypeId, PackingTypeName FROM TBLPackingType WHERE IsActive = TRUE ORDER BY PackingTypeName";
         List<PackingTypeModel> types = new ArrayList<>();
 
         // Add a placeholder/default item
@@ -157,8 +167,8 @@ public class PackingTypeDao {
 
             while (rs.next()) {
                 types.add(PackingTypeModel.builder()
-                        .packingTypeId(rs.getInt("PeekingTypeId"))
-                        .packingTypeName(rs.getString("PeekingTypeName"))
+                        .packingTypeId(rs.getInt("PackingTypeId"))
+                        .packingTypeName(rs.getString("PackingTypeName"))
                         .build());
             }
         } catch (SQLException e) {
