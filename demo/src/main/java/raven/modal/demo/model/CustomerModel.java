@@ -18,4 +18,6 @@ public class CustomerModel {
     private Double openingBalance;
     private String createdDate;
     private Double taxPer;
+    private String city;
+    private Boolean isActive;
 }

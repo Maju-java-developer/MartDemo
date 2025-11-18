@@ -24,10 +24,9 @@ public class CustomerTablePanel extends Form implements TableActions{
 
     private JTable table;
     private DefaultTableModel model;
-    private CustomerDao customerDao = new CustomerDao();
+    private final CustomerDao customerDao = new CustomerDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
 
     public CustomerTablePanel() {
         initUI();
@@ -108,12 +107,12 @@ public class CustomerTablePanel extends Form implements TableActions{
 
     private void loadCustomers(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         List<CustomerModel> suppliers = customerDao.getAllCustomers(offset, limit);
         int totalCustomers = UtilsDao.getCount("tblcustomers");
 
-        int count = offset + 1;
         for (CustomerModel customerModel : suppliers) {
             model.addRow(new Object[]{
                     customerModel.getCustomerId(),
@@ -163,12 +162,9 @@ public class CustomerTablePanel extends Form implements TableActions{
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        if (customerDao.deleteCustomer(customerId)) { // Call DAO delete
-                            JOptionPane.showMessageDialog(table1, "Customer deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                            formRefresh(); // Refresh table after successful deletion
-                        } else {
-                            JOptionPane.showMessageDialog(table1, "Database error!", "Error", JOptionPane.ERROR_MESSAGE);
-                        }
+                        int result = customerDao.deleteCustomer(customerId);
+                        showMessageResult(result);
+                        formRefresh();
                     }
                 })
         };

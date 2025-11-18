@@ -5,6 +5,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.CustomerDao;
 import raven.modal.demo.model.CustomerModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
 
@@ -15,10 +16,11 @@ import java.util.Objects;
 @SystemForm(name = "Customer Form", description = "Add or edit Customer information", tags = {"customer", "form"})
 public class FormCustomer extends Form {
 
-    private JTextField txtCustomerName, txtContactNo, txtEmail, txtOpeningBalance, taxPer;
+    private JTextField txtCustomerName, txtContactNo, txtEmail, txtOpeningBalance, taxPer, txtCity;
     private JTextArea txtAddress;
+    private JComboBox<String> cmbIsActive;
     private JButton btnSave, btnClear;
-    private JLabel titleLabel; // Added to hold the title
+    private JLabel titleLabel;
 
     private int customerId = 0;
     private final CustomerDao customerDao = new CustomerDao();
@@ -31,7 +33,6 @@ public class FormCustomer extends Form {
         }
     }
 
-    // Default constructor for Add mode
     public FormCustomer() {
         this(0);
     }
@@ -67,6 +68,7 @@ public class FormCustomer extends Form {
 
         txtCustomerName = new JTextField();
         txtContactNo = new JTextField();
+        txtCity = new JTextField();
         JComponentUtils.setNumberOnly(txtContactNo);
         txtEmail = new JTextField();
         txtOpeningBalance = new JTextField("0.00");
@@ -83,6 +85,7 @@ public class FormCustomer extends Form {
         txtCustomerName.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter Customer name");
         txtContactNo.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter contact number");
         txtEmail.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter email");
+        txtEmail.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter City");
         txtOpeningBalance.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "e.g. 1000.00");
         txtAddress.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter full address");
         taxPer.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter Customer Tax Percentage");
@@ -93,6 +96,8 @@ public class FormCustomer extends Form {
         panel.add(txtContactNo);
         panel.add(new JLabel("Email:"));
         panel.add(txtEmail);
+        panel.add(new JLabel("City:"));
+        panel.add(txtCity);
         panel.add(new JLabel("Address:"));
 
         panel.add(scrollAddress, "height 60!");
@@ -101,6 +106,15 @@ public class FormCustomer extends Form {
         panel.add(txtOpeningBalance);
         panel.add(new JLabel("Tax Percentage:"));
         panel.add(taxPer);
+
+        // shows on only edit
+        if (this.customerId > 0) {
+            cmbIsActive = new JComboBox<>(new String[]{"Active", "Inactive"});
+            cmbIsActive.setSelectedItem("Active");
+            panel.add(new JLabel("Status:"));
+            panel.add(cmbIsActive);
+        }
+
         panel.add(createButtonPanel(), "span 2, align center, gaptop 15");
         return panel;
     }
@@ -119,7 +133,7 @@ public class FormCustomer extends Form {
         buttonPanel.add(btnSave, "gapright 10");
         buttonPanel.add(btnClear, "gapright 10");
 
-        btnClear.addActionListener(e -> saveCustomer());
+        btnClear.addActionListener(e -> clearForm());
         btnSave.addActionListener(e -> saveCustomer());
 
         return buttonPanel;
@@ -132,6 +146,7 @@ public class FormCustomer extends Form {
             txtCustomerName.setText(customer.getCustomerName());
             txtContactNo.setText(customer.getContactNo());
             txtEmail.setText(customer.getEmail());
+            txtCity.setText(customer.getCity());
             txtAddress.setText(customer.getAddress());
             // Use DecimalFormat or similar for cleaner presentation, or just String.valueOf
             txtOpeningBalance.setText(String.format("%.2f", customer.getOpeningBalance()));
@@ -160,6 +175,7 @@ public class FormCustomer extends Form {
                 .contactNo(Objects.toString(txtContactNo.getText(), ""))
                 .address(Objects.toString(txtAddress.getText(), ""))
                 .email(Objects.toString(txtEmail.getText(), ""))
+                .city(Objects.toString(txtCity.getText(), ""))
                 .build();
 
         // Handle number parsing and default values
@@ -174,15 +190,14 @@ public class FormCustomer extends Form {
             customer.setTaxPer(0.00);
         }
 
-        boolean success;
         if (customerId > 0) {
-            customerDao.updateCustomer(customer); // Call Update
-            JOptionPane.showMessageDialog(this, "Customer updated successfully!");
-            // Close the modal window upon success
+            customer.setIsActive(cmbIsActive.getSelectedIndex() == 0);
+            int result = customerDao.updateCustomer(customer);// Call Update
+            showMessageResult(result);
             SwingUtilities.getWindowAncestor(this).dispose();
         } else {
-            customerDao.addCustomer(customer); // Call Add
-            JOptionPane.showMessageDialog(this, customerId > 0 ? "Customer updated successfully!" : "Customer added successfully!");
+            int result = customerDao.addCustomer(customer);// Call Add
+            showMessageResult(result);
             clearForm();
         }
     }
@@ -195,9 +210,15 @@ public class FormCustomer extends Form {
         JComponentUtils.resetTextField(txtContactNo, "");
         txtAddress.setText("");
         txtEmail.setText("");
+        txtCity.setText("");
         // Reset title only when in Add mode
         if (customerId == 0) {
             titleLabel.setText("Add Customer");
         }
+    }
+
+    @Override
+    public void showMessageResult(int result) {
+        MessageUtils.showCustomerMessage(result);
     }
 }

@@ -67,5 +67,19 @@ public class MessageUtils{
             }
         }
     }
+    public static void showCustomerMessage(int result) {
+        switch (result) {
+            case -1 -> JOptionPane.showMessageDialog(null, "Customer updated successfully!");
+            case -2 -> JOptionPane.showMessageDialog(null, "Customer deleted successfully!");
+            case -3 -> JOptionPane.showMessageDialog(null, "Customer already exists!", "Duplicate", JOptionPane.WARNING_MESSAGE);
+            case -4 -> JOptionPane.showMessageDialog(null, "Customer not found!", "Error", JOptionPane.ERROR_MESSAGE);
+            default -> {
+                if (result > 0)
+                    JOptionPane.showMessageDialog(null, "Customer added successfully!");
+                else
+                    JOptionPane.showMessageDialog(null, "Operation failed!", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
 }
