@@ -470,12 +470,12 @@ public class FormPurchase extends Form implements TableActions {
                 .details(details) // NOW THIS IS POPULATED!
                 .build();
         if (purchaseId > 0) {
-             purchaseDao.updatePurchase(purchaseModel); // TODO: Implement Update
+             purchaseDao.handlePurchaseCRUD(purchaseModel, "Update");
              JOptionPane.showMessageDialog(this, "Purchase Updated successfully!.", "Info", JOptionPane.INFORMATION_MESSAGE);
             // Close the form/dialog
             SwingUtilities.getWindowAncestor(this).dispose();
         } else {
-            purchaseDao.savePurchase(purchaseModel, 1); // todo set user id here after ending
+            purchaseDao.handlePurchaseCRUD(purchaseModel, "Save");
             clearForm();
         }
 

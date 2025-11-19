@@ -3,6 +3,7 @@ package raven.modal.demo.dao;
 import raven.modal.demo.model.PurchaseDetailModel;
 import raven.modal.demo.model.PurchaseModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.CallableStatement;
@@ -18,73 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PurchaseDao {
-
-    /**
-     * Deletes a purchase transaction, performing a ledger reversal and removing all details.
-     * @param purchaseId The ID of the purchase to delete.
-     * @return true if the deletion transaction was successful.
-     */
-    public boolean deletePurchase(int purchaseId) {
-        Connection conn = null;
-
-        // 1. Fetch OLD totals for reversal (we reuse the existing helper method)
-        PurchaseModel oldPurchase = getOldPurchaseTotals(purchaseId);
-        if (oldPurchase == null) {
-            JOptionPane.showMessageDialog(null, "Cannot find original purchase to delete.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        try {
-            conn = MySQLConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); // Start transaction
-
-            // --- A. LEDGER REVERSAL ---
-            double oldNetChange = oldPurchase.getTotalAmount() - oldPurchase.getPaidAmount();
-
-            // Reversal: The original transaction ADDED 'oldNetChange' to the balance.
-            // To reverse it, we SUBTRACT 'oldNetChange'.
-            // We reuse the updateSupplierBalanceInTransaction helper by passing -oldNetChange.
-            updateSupplierBalanceInTransaction(conn, oldPurchase.getSupplierID(), -oldNetChange);
-
-            // --- B. DELETE OLD DETAILS ---
-            String sqlDeleteDetails = "DELETE FROM TBLPurchaseDetail WHERE PurchaseID = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteDetails)) {
-                ps.setInt(1, purchaseId);
-                ps.executeUpdate();
-                // We don't check row count here; it's okay if it deletes 0 details if somehow the record was already cleaned.
-            }
-
-            // --- C. DELETE PURCHASE HEADER (TBLPurchase) ---
-            String sqlDeleteHeader = "DELETE FROM TBLPurchase WHERE PurchaseID = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteHeader)) {
-                ps.setInt(1, purchaseId);
-
-                if (ps.executeUpdate() == 0) {
-                    // If the header wasn't deleted, something is wrong.
-                    throw new SQLException("Failed to delete purchase header. Purchase ID not found.");
-                }
-            }
-
-            // --- D. COMMIT ---
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            System.err.println("Purchase Deletion Transaction failed. Rolling back: " + e.getMessage());
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            JOptionPane.showMessageDialog(null, "Purchase deletion failed due to a database error.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        } finally {
-            try {
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) {
-                System.err.println("Error closing connection: " + e.getMessage());
-            }
-        }
-    }
 
     /**
      * Fetches purchase header and all associated details for editing.
@@ -156,11 +90,36 @@ public class PurchaseDao {
         return purchase;
     }
 
-    public boolean savePurchase(PurchaseModel purchaseModel, int currentUserId) {
+    /**
+     * Serializes a list of PurchaseDetailModel objects into a JSON array string.
+     * NOTE: For production, use a proper library like Jackson or Gson for safety.
+     */
+    private String serializeDetailsToJson(List<PurchaseDetailModel> details) {
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("[");
 
-        String sqlHeader = "{CALL SP_IUD_Purchase(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
-        String sqlDetail = "INSERT INTO TBLPurchaseDetail (PurchaseID, ProductID, Quantity, Rate, Total) VALUES (?, ?, ?, ?, ?)";
-        String sqlStock  = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyIn, Rate) VALUES (?, 'PURCHASE', ?, ?, ?, ?)";
+        for (int i = 0; i < details.size(); i++) {
+            PurchaseDetailModel detail = details.get(i);
+
+            jsonBuilder.append("{");
+            // Important: Use keys exactly matching the JSON path in the SP
+            jsonBuilder.append("\"productID\":").append(detail.getProductID()).append(",");
+            jsonBuilder.append("\"quantity\":").append(detail.getQuantity()).append(",");
+            jsonBuilder.append("\"rate\":").append(detail.getRate()).append(",");
+            jsonBuilder.append("\"total\":").append(detail.getTotal());
+            jsonBuilder.append("}");
+
+            if (i < details.size() - 1) {
+                jsonBuilder.append(",");
+            }
+        }
+        jsonBuilder.append("]");
+        return jsonBuilder.toString();
+    }
+
+    public boolean handlePurchaseCRUD(PurchaseModel purchaseModel, String status) {
+
+        String sql = "{CALL SP_IUD_Purchase(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
         Connection conn = null;
 
@@ -168,23 +127,53 @@ public class PurchaseDao {
             conn = MySQLConnection.getInstance().getConnection();
             conn.setAutoCommit(false);
 
-            CallableStatement cs = conn.prepareCall(sqlHeader);
+            CallableStatement cs = conn.prepareCall(sql);
 
-            // 1 ─ p_PurchaseID (INOUT)
-            cs.setNull(1, Types.INTEGER);
+            boolean isSave = status.equalsIgnoreCase("Save");
+            boolean isUpdate = status.equalsIgnoreCase("Update");
+            boolean isDelete = status.equalsIgnoreCase("Delete");
+
+            // Convert details → JSON (Only Save/Update)
+            String detailsJson = (!isDelete) ? serializeDetailsToJson(purchaseModel.getDetails()) : null;
+
+
+            // ------------------------------
+            // 1. PurchaseID (INOUT)
+            // ------------------------------
+            if (isSave) {
+                cs.setNull(1, Types.INTEGER);
+            } else {
+                cs.setInt(1, purchaseModel.getPurchaseID());
+            }
             cs.registerOutParameter(1, Types.INTEGER);
 
-            // 2 ─ SupplierID
+
+            // ------------------------------
+            // 2. SupplierID
+            // ------------------------------
             cs.setInt(2, purchaseModel.getSupplierID());
 
-            // 3 ─ PurchaseDate
+
+            // ------------------------------
+            // 3. PurchaseDate
+            // ------------------------------
             cs.setTimestamp(3, Timestamp.valueOf(purchaseModel.getPurchaseDate()));
 
-            // 4 ─ InvoiceNo (INOUT)
-            cs.setNull(4, Types.VARCHAR);
+
+            // ------------------------------
+            // 4. InvoiceNo (INOUT)
+            // ------------------------------
+            if (isSave) {
+                cs.setNull(4, Types.VARCHAR);
+            } else {
+                cs.setString(4, purchaseModel.getInvoiceNo());
+            }
             cs.registerOutParameter(4, Types.VARCHAR);
 
-            // 5-10 fields
+
+            // ------------------------------
+            // 5–10 Header Fields
+            // ------------------------------
             cs.setDouble(5, purchaseModel.getActualAmount());
             cs.setString(6, purchaseModel.getDiscountType());
             cs.setDouble(7, purchaseModel.getDiscountValue());
@@ -192,69 +181,75 @@ public class PurchaseDao {
             cs.setDouble(9, purchaseModel.getPaidAmount());
             cs.setString(10, purchaseModel.getRemarks());
 
-            // 11 datetime
-            Timestamp now = Timestamp.valueOf(LocalDateTime.now());
-            cs.setTimestamp(11, now);
 
-            // 12 UserID
-            cs.setInt(12, currentUserId);
+            // 11: Current timestamp
+            cs.setTimestamp(11, Timestamp.valueOf(LocalDateTime.now()));
 
-            // 13 Status
-            cs.setString(13, "Save");
+            // 12: User ID
+            cs.setInt(12, Constants.getCurrentUserId());
 
-            // 14 ReturnID (OUT)
-            cs.registerOutParameter(14, Types.INTEGER);
+            // 13: Status (Save/Update/Delete)
+            cs.setString(13, status);
 
+            // 14: JSON (NULL for Delete)
+            if (!isDelete) {
+                cs.setString(14, detailsJson);
+            } else {
+                cs.setNull(14, Types.VARCHAR);
+            }
+
+            // 15: OUT return code
+            cs.registerOutParameter(15, Types.INTEGER);
+
+
+            // 🟢 Execute
             cs.executeUpdate();
 
-            // Read out params
-            int purchaseId = cs.getInt(1);
-            String invoiceNo = cs.getString(4);
-            int resultCode = cs.getInt(14);
 
-            if (resultCode <= 0) {
+            // Read OUT parameters
+            int purchaseID = cs.getInt(1);
+            String invoiceNo = cs.getString(4);
+            int result = cs.getInt(15);
+
+
+            // ------------------------------
+            // 🧩 Interpret result codes
+            // ------------------------------
+
+            if (result <= 0) {
                 conn.rollback();
-                JOptionPane.showMessageDialog(null,
-                        "Error: Stored procedure returned failure!",
-                        "Error", JOptionPane.ERROR_MESSAGE);
+//                JOptionPane.showMessageDialog(null,
+//                        "Failed! Code: " + result,
+//                        "Error", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
 
-            // ========== INSERT DETAILS AND STOCK ==========
-            PreparedStatement psDetail = conn.prepareStatement(sqlDetail, Statement.RETURN_GENERATED_KEYS);
-            PreparedStatement psStock = conn.prepareStatement(sqlStock);
+            conn.commit();
 
-            for (PurchaseDetailModel detail : purchaseModel.getDetails()) {
 
-                // Insert detail
-                psDetail.setInt(1, purchaseId);
-                psDetail.setInt(2, detail.getProductID());
-                psDetail.setDouble(3, detail.getQuantity());
-                psDetail.setDouble(4, detail.getRate());
-                psDetail.setDouble(5, detail.getTotal());
-                psDetail.executeUpdate();
+            // SUCCESS MESSAGES
+            switch (result) {
 
-                int detailId;
-                try (ResultSet rs = psDetail.getGeneratedKeys()) {
-                    if (rs.next()) detailId = rs.getInt(1);
-                    else throw new SQLException("Failed to get PurchaseDetailID.");
-                }
+                case -1:
+                    JOptionPane.showMessageDialog(null,
+                            "Purchase Updated Successfully!",
+                            "Updated", JOptionPane.INFORMATION_MESSAGE);
+                    break;
 
-                // Insert stock
-                psStock.setInt(1, detail.getProductID());
-                psStock.setInt(2, purchaseId);
-                psStock.setInt(3, detailId);
-                psStock.setDouble(4, detail.getQuantity());
-                psStock.setDouble(5, detail.getRate());
-                psStock.executeUpdate();
+                case -2:
+                    JOptionPane.showMessageDialog(null,
+                            "Purchase Deleted Successfully!",
+                            "Deleted", JOptionPane.INFORMATION_MESSAGE);
+                    break;
+
+                default:
+                    JOptionPane.showMessageDialog(null,
+                            "Purchase Saved!\nID: " + purchaseID + "\nInvoice: " + invoiceNo,
+                            "Saved", JOptionPane.INFORMATION_MESSAGE);
             }
 
-            conn.commit();
-            JOptionPane.showMessageDialog(null,
-                    "Purchase Saved Successfully! \nID: " + purchaseId + "\nInvoice: " + invoiceNo,
-                    "Success", JOptionPane.INFORMATION_MESSAGE);
-
             return true;
+
 
         } catch (Exception e) {
 
@@ -269,6 +264,7 @@ public class PurchaseDao {
             try { if (conn != null) conn.setAutoCommit(true); } catch (Exception ignore) {}
         }
     }
+
     /**
      * Fetches a paginated list of Purchase header records, including the Supplier name.
      * @param offset Starting point of the records.

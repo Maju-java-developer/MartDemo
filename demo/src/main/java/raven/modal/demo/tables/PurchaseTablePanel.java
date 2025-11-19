@@ -158,9 +158,8 @@ public class PurchaseTablePanel extends Form implements TableActions {
         if (JOptionPane.showConfirmDialog(this,
                 "Are you sure you want to delete Purchase ID " + purchaseId + " and all linked details?",
                 "Confirm Delete", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-
-             purchaseDao.deletePurchase(purchaseId);
-            // Placeholder:
+            PurchaseModel purchaseById = purchaseDao.getPurchaseById(purchaseId);
+            purchaseDao.handlePurchaseCRUD(purchaseById, "Delete");
             JOptionPane.showMessageDialog(this, "Purchase deletion logic initiated for ID: " + purchaseId, "Deletion", JOptionPane.INFORMATION_MESSAGE);
             formRefresh();
         }
