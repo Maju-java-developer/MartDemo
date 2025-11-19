@@ -33,7 +33,7 @@ public class SaleDao {
             conn.setAutoCommit(false); // Start transaction
 
             // --- A. INSERT SALE HEADER (TBLSale) ---
-            String sqlHeader = "INSERT INTO TBLSale (CustomerID, SaleDate, InvoiceNo, TotalAmount, ReceivedAmount, Remarks) VALUES (?, ?, ?, ?, ?, ?)";
+            String sqlHeader = "INSERT INTO TBLSale (CustomerID, SaleDate, InvoiceNo, TotalAmount, ReceivedAmount, Remarks, ActualAmount, GSTPercentage, GSTAmount, DiscountType, Discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             int saleId;
             try (PreparedStatement ps = conn.prepareStatement(sqlHeader, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, saleModel.getCustomerID());
@@ -42,6 +42,11 @@ public class SaleDao {
                 ps.setDouble(4, saleModel.getTotalAmount());
                 ps.setDouble(5, saleModel.getReceivedAmount());
                 ps.setString(6, saleModel.getRemarks());
+                ps.setDouble(7, saleModel.getActualAmount());
+                ps.setDouble(8, saleModel.getGstPer());
+                ps.setDouble(9, saleModel.getGstAmount());
+                ps.setString(10, saleModel.getDiscountType());
+                ps.setDouble(11, saleModel.getDiscountValue());
                 ps.executeUpdate();
 
                 try (ResultSet rs = ps.getGeneratedKeys()) {
@@ -55,7 +60,7 @@ public class SaleDao {
             }
 
             // --- B. INSERT SALE DETAILS AND UPDATE STOCK LEDGER ---
-            String sqlDetail = "INSERT INTO TBLSaleDetail (SaleID, ProductID, Quantity, Rate, Total) VALUES (?, ?, ?, ?, ?)";
+            String sqlDetail = "INSERT INTO TBLSaleDetail (SaleID, ProductID, Quantity, Rate, Total, ProductDiscount) VALUES (?, ?, ?, ?, ?, ?)";
             String sqlStock = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyOut, Rate) VALUES (?, 'SALE', ?, ?, ?, ?)";
 
             try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail, Statement.RETURN_GENERATED_KEYS);
@@ -68,6 +73,7 @@ public class SaleDao {
                     psDetail.setDouble(3, detail.getQuantity());
                     psDetail.setDouble(4, detail.getRate());
                     psDetail.setDouble(5, detail.getTotal());
+                    psDetail.setDouble(6, detail.getProductDiscount());
                     psDetail.executeUpdate();
 
                     int saleDetailId;
@@ -91,11 +97,8 @@ public class SaleDao {
                 }
             }
 
-            // --- C. UPDATE CUSTOMER LEDGER (TBLCustomers) ---
             // A Sale INCREASES the customer's OutstandingBalance (they owe more)
             updateCustomerBalanceInTransaction(conn, saleModel.getCustomerID(), netReceivableChange);
-
-            // --- D. COMMIT TRANSACTION ---
             conn.commit();
             return true;
 

@@ -20,7 +20,7 @@ public class SaleDetailModel {
 
     private double quantity;     // Total quantity in base units
     private double rate;         // Unit selling price
-    private double lineDiscount; // Discount on this line item (fixed value)
+    private double productDiscount; // Discount on this line item (fixed value)
     private double total;        // Net price of line item after lineDiscount
 
     // Derived fields, useful for display/stock

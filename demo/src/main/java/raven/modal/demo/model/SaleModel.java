@@ -14,7 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class SaleModel {
+public class SaleModel extends AbstractModel{
 
     private int saleID;
     private int customerID;
@@ -27,9 +27,9 @@ public class SaleModel {
     private double discountValue;    // Header discount value (fixed or percentage)
     private double totalAmount;      // Final amount (after header discount + GST)
     private double receivedAmount;   // Amount paid by customer
-
+    private double gstPer;
+    private double gstAmount;
     private String remarks;
-    private LocalDateTime createdDate;
 
     private List<SaleDetailModel> details; // Line items
 }

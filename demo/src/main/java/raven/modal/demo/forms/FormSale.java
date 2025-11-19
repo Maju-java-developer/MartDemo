@@ -38,7 +38,7 @@ public class FormSale extends Form implements TableActions {
 
     // --- Detail Row Input Components ---
     private JComboBox<ProductModel> cmbProductSearch;
-    private JTextField txtCartons, txtUnits, txtUnitPrice, txtDiscountLine;
+    private JTextField txtCartons, txtUnits, txtUnitPrice, txtProductDiscount;
     private JButton btnAdd;
 
     // --- Table Components ---
@@ -102,8 +102,8 @@ public class FormSale extends Form implements TableActions {
         JComponentUtils.setNumberOnly(txtUnits);
         txtUnitPrice = new JTextField("0.00");
         JComponentUtils.setNumberOnly(txtUnitPrice);
-        txtDiscountLine = new JTextField("0"); // New Discount Field
-        JComponentUtils.setNumberOnly(txtDiscountLine);
+        txtProductDiscount = new JTextField("0"); // New Discount Field
+        JComponentUtils.setNumberOnly(txtProductDiscount);
         btnAdd = new JButton("Add");
         btnAdd.setBackground(new Color(50, 150, 250));
         btnAdd.setForeground(Color.WHITE);
@@ -122,7 +122,7 @@ public class FormSale extends Form implements TableActions {
         panel.add(txtCartons, "h 30!, growx");
         panel.add(txtUnits, "h 30!, growx");
         panel.add(txtUnitPrice, "h 30!, growx");
-        panel.add(txtDiscountLine, "h 30!, growx");
+        panel.add(txtProductDiscount, "h 30!, growx");
         panel.add(btnAdd, "h 30!, growx");
 
         btnAdd.addActionListener(this::addProductDetailRow);
@@ -342,17 +342,17 @@ public class FormSale extends Form implements TableActions {
         }
 
         // --- Input Validation and Calculation ---
-        double cartons = 0, units = 0, unitPrice = 0, lineDiscount = 0;
+        double cartons = 0, units = 0, unitPrice = 0, productDiscount = 0;
         try {
             cartons = Double.parseDouble(txtCartons.getText().trim());
             units = Double.parseDouble(txtUnits.getText().trim());
             unitPrice = Double.parseDouble(txtUnitPrice.getText().trim());
-            lineDiscount = Double.parseDouble(txtDiscountLine.getText().trim());
+            productDiscount = Double.parseDouble(txtProductDiscount.getText().trim());
 
             if (unitPrice <= 0 || (cartons <= 0 && units <= 0)) {
                 throw new NumberFormatException("Invalid price or quantity.");
             }
-            if (lineDiscount < 0 || lineDiscount > (unitPrice * 100)) { // Simple check
+            if (productDiscount < 0 || productDiscount > (unitPrice * 100)) { // Simple check
                 throw new NumberFormatException("Invalid discount value.");
             }
 
@@ -373,7 +373,7 @@ public class FormSale extends Form implements TableActions {
 
         // Calculate total price after discount
         double grossPrice = totalQuantity * unitPrice;
-        double netPrice = grossPrice - lineDiscount;
+        double netPrice = grossPrice - productDiscount;
         if (netPrice < 0) netPrice = 0;
 
         // --- Add Row ---
@@ -382,7 +382,7 @@ public class FormSale extends Form implements TableActions {
                 selectedProduct.getProductName(),
                 totalQuantity,
                 unitPrice,
-                String.format("%.2f", lineDiscount),
+                String.format("%.2f", productDiscount),
                 String.format("%.2f", netPrice),
                 "Action Placeholder",
                 selectedProduct.getProductId(),
@@ -398,7 +398,7 @@ public class FormSale extends Form implements TableActions {
         JComponentUtils.resetTextField(txtCartons, "0");
         JComponentUtils.resetTextField(txtUnits, "0");
         JComponentUtils.resetTextField(txtUnitPrice, "0.00");
-        JComponentUtils.resetTextField(txtDiscountLine, "0");
+        JComponentUtils.resetTextField(txtProductDiscount, "0");
         ((JTextField) cmbProductSearch.getEditor().getEditorComponent()).setText("");
         selectedProduct = null;
     }
@@ -508,7 +508,7 @@ public class FormSale extends Form implements TableActions {
                         .productID((int) detailModel.getValueAt(i, 7)) // Index 7: Hidden ProductID
                         .quantity(Double.parseDouble(detailModel.getValueAt(i, 2).toString())) // Index 2: Total Qty
                         .rate(Double.parseDouble(detailModel.getValueAt(i, 3).toString())) // Index 3: Unit Price
-                        .lineDiscount(Double.parseDouble(detailModel.getValueAt(i, 4).toString())) // Index 4: Line Discount
+                        .productDiscount(Double.parseDouble(detailModel.getValueAt(i, 4).toString())) // Index 4: Line Discount
                         .total(Double.parseDouble(detailModel.getValueAt(i, 5).toString())) // Index 5: Net Price
                         .build());
 
@@ -524,6 +524,8 @@ public class FormSale extends Form implements TableActions {
                 .customerID(selectedCustomer.getCustomerId())
                 .saleDate(LocalDateTime.now())
                 .invoiceNo(InvoiceUtil.generateInvoiceNumber()) // Use utility or capture from UI
+                .gstPer(Constants.DEFAULT_GST_RATE)
+                .gstAmount(Double.parseDouble(txtGSTAmount.getText()))
                 .actualAmount(actualAmount) // This is the net value before header discount and GST
                 .discountType((String) cmbDiscountType.getSelectedItem())
                 .discountValue(discountValue)
@@ -555,7 +557,7 @@ public class FormSale extends Form implements TableActions {
         txtCartons.addKeyListener(detailKeyAdapter);
         txtUnits.addKeyListener(detailKeyAdapter);
         txtUnitPrice.addKeyListener(detailKeyAdapter);
-        txtDiscountLine.addKeyListener(detailKeyAdapter); // New!
+        txtProductDiscount.addKeyListener(detailKeyAdapter); // New!
 
         // Listeners for Final Summary Calculation (Discount Type, Discount Value)
         cmbDiscountType.addActionListener(e -> updateActualAmount());
