@@ -1,7 +1,7 @@
 package raven.modal.demo.dao;
 
 import lombok.Getter;
-import raven.modal.demo.model.ModelUser;
+import raven.modal.demo.model.UserModel;
 import raven.modal.demo.model.User;
 import raven.modal.demo.mysql.MySQLConnection;
 import raven.modal.demo.utils.HashUtils;
@@ -25,8 +25,8 @@ public class UserDAO {
      * @param password The raw password provided by the user.
      * @return ModelUser object if credentials are valid, otherwise null.
      */
-    public static ModelUser authenticateUser(String userName, String password) {
-        ModelUser user = null;
+    public static UserModel authenticateUser(String userName, String password) {
+        UserModel user = null;
 
         // 1. Hash the input password in Java (This hash is passed to the SP for matching)
         // NOTE: Ensure HashUtils.hashPassword(password) is available and uses the same algorithm as used during user registration.
@@ -65,18 +65,20 @@ public class UserDAO {
                         String fullName = rs.getString("FullName");
                         String email = rs.getString("Email");
                         String contactNo = rs.getString("ContactNo");
-
                         String roleString = rs.getString("Role");
-                        ModelUser.Role role = ModelUser.Role.fromString(roleString);
+                        UserModel.Role role = UserModel.Role.fromString(roleString);
+                        Boolean isActive = rs.getBoolean("isActive");
+                        Boolean isBlocked = rs.getBoolean("isBlocked");
 
-                        // Assuming ModelUser.builder() pattern
-                        user = ModelUser.builder()
+                        user = UserModel.builder()
                                 .userId(userID)
                                 .userName(retrievedUserName)
                                 .fullName(fullName)
                                 .email(email)
                                 .contactNo(contactNo)
                                 .role(role)
+                                .isActive(isActive)
+                                .isBlocked(isBlocked)
                                 .build();
 
                         System.out.println("Authentication Success for: " + userName);

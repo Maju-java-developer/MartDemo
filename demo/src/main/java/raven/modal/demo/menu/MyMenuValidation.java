@@ -1,7 +1,7 @@
 package raven.modal.demo.menu;
 
 import raven.modal.Drawer;
-import raven.modal.demo.model.ModelUser;
+import raven.modal.demo.model.UserModel;
 import raven.modal.demo.system.Form;
 import raven.modal.drawer.menu.MenuValidation;
 
@@ -16,14 +16,14 @@ public class MyMenuValidation extends MenuValidation {
     /**
      * The current user whose permissions are used for menu validation.
      */
-    public static ModelUser user;
+    public static UserModel user;
 
     /**
      * Sets the current user whose role will determine menu validation.
      *
-     * @param user the {@link ModelUser} object representing the signed-in user
+     * @param user the {@link UserModel} object representing the signed-in user
      */
-    public static void setUser(ModelUser user) {
+    public static void setUser(UserModel user) {
         MyMenuValidation.user = user;
     }
 
@@ -83,7 +83,7 @@ public class MyMenuValidation extends MenuValidation {
         if (user == null) {
             return false;
         }
-        if (user.getRole() == ModelUser.Role.ADMIN) {
+        if (user.getRole() == UserModel.Role.ADMIN) {
             return true;
         }
         // Uncomment below to enable more fine-grained access for non-admin users.

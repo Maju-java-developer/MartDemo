@@ -1,11 +1,11 @@
 package raven.modal.demo.utils;
 
-import raven.modal.demo.model.ModelUser;
+import raven.modal.demo.model.UserModel;
 
 import javax.swing.*;
 
 public class Constants {
-    public static ModelUser currentUser = null;
+    public static UserModel currentUser = null;
 
     public static int getCurrentUserId() {
         if (currentUser == null) {

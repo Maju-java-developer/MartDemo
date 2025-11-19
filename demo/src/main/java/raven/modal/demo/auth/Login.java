@@ -6,7 +6,7 @@ import raven.modal.component.DropShadowBorder;
 import raven.modal.demo.component.LabelButton;
 import raven.modal.demo.dao.UserDAO;
 import raven.modal.demo.menu.MyDrawerBuilder;
-import raven.modal.demo.model.ModelUser;
+import raven.modal.demo.model.UserModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.system.FormManager;
 import raven.modal.demo.utils.Constants;
@@ -40,8 +40,7 @@ public class Login extends Form {
 
         JLabel lbTitle = new JLabel("Welcome back!");
         JLabel lbDescription = new JLabel("Please sign in to access your account");
-        lbTitle.putClientProperty(FlatClientProperties.STYLE, "" +
-                "font:bold +12;");
+        lbTitle.putClientProperty(FlatClientProperties.STYLE, "font:bold +12;");
 
         loginContent.add(lbTitle);
         loginContent.add(lbDescription);
@@ -64,19 +63,14 @@ public class Login extends Form {
         txtUsername.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your username or email");
         txtPassword.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter your password");
 
-        panelLogin.putClientProperty(FlatClientProperties.STYLE, "" +
-                "[dark]background:tint($Panel.background,1%);");
-        loginContent.putClientProperty(FlatClientProperties.STYLE, "" +
-                "background:null;");
-        txtUsername.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
+        panelLogin.putClientProperty(FlatClientProperties.STYLE, "[dark]background:tint($Panel.background,1%);");
+        loginContent.putClientProperty(FlatClientProperties.STYLE, "background:null;");
+        txtUsername.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" +
                 "arc:12;");
-        txtPassword.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
+        txtPassword.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" +
                 "arc:12;" +
                 "showRevealButton:true;");
-        cmdLogin.putClientProperty(FlatClientProperties.STYLE, "" +
-                "margin:4,10,4,10;" +
+        cmdLogin.putClientProperty(FlatClientProperties.STYLE, "margin:4,10,4,10;" +
                 "arc:12;");
 
         loginContent.add(new JLabel("Username"), "gapy 25");
@@ -102,14 +96,14 @@ public class Login extends Form {
             txtUsername.putClientProperty(FlatClientProperties.OUTLINE, null);
             txtPassword.putClientProperty(FlatClientProperties.OUTLINE, null);
 
-            if (userName.equals("") || password.equals("")) {
+            if (userName.isEmpty() || password.isEmpty()) {
                 JOptionPane.showMessageDialog(null, "Please enter a valid username/password");
                 txtUsername.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
                 txtPassword.putClientProperty(FlatClientProperties.OUTLINE, FlatClientProperties.OUTLINE_ERROR);
                 return;
             }
 
-            ModelUser userModel = UserDAO.authenticateUser(userName, password);
+            UserModel userModel = UserDAO.authenticateUser(userName, password);
 
             if (userModel == null) {
                 JOptionPane.showMessageDialog(null, "Please enter a valid username/password");
@@ -118,21 +112,21 @@ public class Login extends Form {
                 return;
             }
 
-            Constants.currentUser = userModel;
-            System.out.println("UserId: " + Constants.currentUser.getUserId());
-            // after success reset the username & password
-            txtUsername.setText("");
-            txtPassword.setText("");
-
-            MyDrawerBuilder.getInstance().setUser(userModel);
-            FormManager.login();
+            boolean isValid = validateUser(userModel);
+            if (isValid) {
+                Constants.currentUser = userModel;
+                // after success reset the username & password
+                txtUsername.setText("");
+                txtPassword.setText("");
+                MyDrawerBuilder.getInstance().setUser(userModel);
+                FormManager.login();
+            }
         });
     }
 
     private JPanel createInfo() {
         JPanel panelInfo = new JPanel(new MigLayout("wrap,al center", "[center]"));
-        panelInfo.putClientProperty(FlatClientProperties.STYLE, "" +
-                "background:null;");
+        panelInfo.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
         panelInfo.add(new JLabel("Don't remember your account details?"));
         panelInfo.add(new JLabel("Contact us at"), "split 2");
@@ -152,5 +146,27 @@ public class Login extends Form {
             panel.setBorder(new DropShadowBorder(new Insets(5, 8, 12, 8), 1, 25));
         }
     }
+
+    public boolean validateUser(UserModel userModel) {
+        // Check if user is active
+        if (!userModel.getIsActive()) {
+            JOptionPane.showMessageDialog(null,
+                    "Your account is inactive. Please contact administrator.",
+                    "Inactive User",
+                    JOptionPane.WARNING_MESSAGE);
+            return false; // Stop further processing
+        }
+
+        // Check if user is blocked
+        if (userModel.getIsBlocked()) {
+            JOptionPane.showMessageDialog(null,
+                    "Your account is blocked. Please contact administrator.",
+                    "Blocked User",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        return true;
+    }
+
 
 }

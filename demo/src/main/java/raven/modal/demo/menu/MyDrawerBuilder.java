@@ -22,7 +22,7 @@ import raven.modal.demo.forms.FormPurchase;
 import raven.modal.demo.forms.FormSale;
 import raven.modal.demo.forms.FormSupplier;
 import raven.modal.demo.forms.FormSupplierPayment;
-import raven.modal.demo.model.ModelUser;
+import raven.modal.demo.model.UserModel;
 import raven.modal.demo.system.AllForms;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.system.FormManager;
@@ -69,7 +69,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
      *  Get current ModelUser.
      */
     @Getter
-    private ModelUser user;
+    private UserModel user;
 
     /**
      * Get the singleton instance of MyDrawerBuilder.
@@ -88,7 +88,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
      *
      * @param user ModelUser to set
      */
-    public void setUser(ModelUser user) {
+    public void setUser(UserModel user) {
         boolean updateMenuItem = this.user == null || this.user.getRole() != user.getRole();
 
         this.user = user;
@@ -100,7 +100,7 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
         SimpleHeader header = (SimpleHeader) getHeader();
         SimpleHeaderData data = header.getSimpleHeaderData();
         AvatarIcon icon = (AvatarIcon) data.getIcon();
-        String iconName = user.getRole() == ModelUser.Role.ADMIN ? "avatar_me.svg" : "avatar_female.svg";
+        String iconName = user.getRole() == UserModel.Role.ADMIN ? "avatar_me.svg" : "avatar_female.svg";
 
         icon.setIcon(new FlatSVGIcon("raven/modal/demo/drawer/image/" + iconName, 100, 100));
         data.setTitle(user.getUserName());
