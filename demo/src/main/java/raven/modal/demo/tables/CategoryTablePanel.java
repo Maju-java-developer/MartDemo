@@ -27,7 +27,6 @@ public class CategoryTablePanel extends Form implements TableActions {
     private CategoryDao categoryDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
     public CategoryTablePanel() {
@@ -114,6 +113,7 @@ public class CategoryTablePanel extends Form implements TableActions {
 
     private void loadCategories(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         List<CategoryModel> categories = categoryDao.getAllCategories(offset, limit);

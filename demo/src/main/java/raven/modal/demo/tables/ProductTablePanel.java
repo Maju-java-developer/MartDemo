@@ -29,7 +29,6 @@ public class ProductTablePanel extends Form implements TableActions {
     private ProductDao productDao = new ProductDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE; // Items per page
 
     public ProductTablePanel() {
         initUI();
@@ -114,6 +113,8 @@ public class ProductTablePanel extends Form implements TableActions {
 
     private void loadProducts(int page) {
         model.setRowCount(0);
+        // Items per page
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         // Fetch data using the DAO

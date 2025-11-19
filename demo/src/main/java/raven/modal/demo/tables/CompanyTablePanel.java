@@ -27,7 +27,6 @@ public class CompanyTablePanel extends Form implements TableActions {
     private CompanyDao companyDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
     public CompanyTablePanel() {
@@ -132,6 +131,7 @@ public class CompanyTablePanel extends Form implements TableActions {
 
     private void loadCompanies(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         List<CompanyModel> companies = companyDao.getAllCompanies(offset, limit);

@@ -26,7 +26,6 @@ public class BrandTablePanel extends Form implements TableActions {
     private BrandDao brandDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
     public BrandTablePanel() {
@@ -115,6 +114,7 @@ public class BrandTablePanel extends Form implements TableActions {
 
     private void loadBrands(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         List<BrandModel> brands = brandDao.getAllBrands(offset, limit);

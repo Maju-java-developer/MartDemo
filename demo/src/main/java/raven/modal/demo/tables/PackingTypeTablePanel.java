@@ -26,7 +26,6 @@ public class PackingTypeTablePanel extends Form implements TableActions {
     private PackingTypeDao PackingTypeDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate;
 
     public PackingTypeTablePanel() {
@@ -114,6 +113,7 @@ public class PackingTypeTablePanel extends Form implements TableActions {
 
     private void loadPackingTypes(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         List<PackingTypeModel> types = PackingTypeDao.getAllPackingTypes(offset, limit);

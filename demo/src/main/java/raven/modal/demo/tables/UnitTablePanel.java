@@ -26,7 +26,6 @@ public class UnitTablePanel extends Form implements TableActions {
     private UnitDao unitDao; // Placeholder
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
 
     public UnitTablePanel() {
         unitDao = new UnitDao();
@@ -112,6 +111,7 @@ public class UnitTablePanel extends Form implements TableActions {
 
     private void loadUnits(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         // Fetch data using the DAO placeholder

@@ -28,7 +28,6 @@ public class SupplierTablePanel extends Form implements TableActions{
     private SupplierDao supplierDao = new SupplierDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private int limit = Constants.LIMIT_PER_PAGE;
     private JButton btnCreate; // Added standard create button
 
     public SupplierTablePanel() {
@@ -122,6 +121,7 @@ public class SupplierTablePanel extends Form implements TableActions{
 
     private void loadSuppliers(int page) {
         model.setRowCount(0);
+        int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
         // NOTE: supplierDao.getSuppliers is assumed to be the pagination method
