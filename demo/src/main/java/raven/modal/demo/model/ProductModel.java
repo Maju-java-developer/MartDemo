@@ -23,6 +23,7 @@ public class ProductModel {
     private String peckingTypeName;
     private String companyName;
     private int unitsPerCarton;
+    private int reorderLevel = 0;
 
     @Override
     public String toString() {

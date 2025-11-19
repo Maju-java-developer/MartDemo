@@ -2,6 +2,7 @@ package raven.modal.demo.dao;
 
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.CallableStatement;
@@ -24,7 +25,7 @@ public class CompanyDao {
             cs.setNull(1, java.sql.Types.INTEGER); // CompanyID NULL for insert
             cs.setString(2, company.getCompanyName());
             cs.setBoolean(3, company.isActive());
-            cs.setInt(4, 1);  // CreatedBy user ID
+            cs.setInt(4, Constants.getCurrentUserId());
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Save");
 
@@ -118,7 +119,7 @@ public class CompanyDao {
             cs.setInt(1, company.getCompanyId());
             cs.setString(2, company.getCompanyName());
             cs.setBoolean(3, company.isActive());
-            cs.setInt(4, 1);
+            cs.setInt(4, Constants.getCurrentUserId());
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Update");
 
@@ -146,7 +147,7 @@ public class CompanyDao {
             cs.setInt(1, companyId);
             cs.setNull(2, java.sql.Types.VARCHAR);
             cs.setNull(3, java.sql.Types.BOOLEAN);
-            cs.setInt(4, 1);
+            cs.setInt(4, Constants.getCurrentUserId());
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Delete");
 

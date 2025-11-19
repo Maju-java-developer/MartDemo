@@ -6,6 +6,7 @@ import raven.modal.component.SimpleModalBorder;
 import raven.modal.demo.auth.Login;
 import raven.modal.demo.component.About;
 import raven.modal.demo.forms.FormDashboard;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.UndoRedo;
 
 import javax.swing.*;
@@ -75,6 +76,7 @@ public class FormManager {
     }
 
     public static void logout() {
+        Constants.currentUser = null;
         Drawer.setVisible(false);
         frame.getContentPane().removeAll();
         Form login = getLogin();

@@ -1,6 +1,19 @@
 package raven.modal.demo.utils;
 
+import raven.modal.demo.model.ModelUser;
+
+import javax.swing.*;
+
 public class Constants {
+    public static ModelUser currentUser = null;
+
+    public static int getCurrentUserId() {
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(null, "User not logged in", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+        return currentUser.getUserId();
+    }
+
     public final static String[] supplierColumns = {"#", "Vendor Name", "Contact No", "Email", "Address", "Remaining Balance", "Actions"};
     public final static String[] peckingTypeColumns = {"#", "PeckingTitle", "Quarter Qty", "Status", "Actions"};
     public final static String[] companyColumns = {"#", "Company Name", "Status", "Actions"};
@@ -17,7 +30,7 @@ public class Constants {
             DISCOUNT_TYPE_PERCENTAGE,
             DISCOUNT_TYPE_FIXED
     };
-    public static final double DEFAULT_GST_RATE = 0.0;
+    public static final double DEFAULT_GST_RATE = 4.0;
     public static final int LIMIT_PER_PAGE = 10;
 
 }

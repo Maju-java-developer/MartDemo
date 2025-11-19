@@ -2,6 +2,7 @@ package raven.modal.demo.dao;
 
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.*;
@@ -21,7 +22,7 @@ public class BrandDao {
             cs.setString(2, brand.getBrandTitle());
             cs.setInt(3, brand.getCompanyId());
             cs.setBoolean(4, brand.isActive());
-            cs.setInt(5, 1);
+            cs.setInt(5, Constants.getCurrentUserId());
             cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(7, "Save");
 
@@ -71,7 +72,7 @@ public class BrandDao {
             cs.setString(2, brand.getBrandTitle());
             cs.setInt(3, brand.getCompanyId());
             cs.setBoolean(4, brand.isActive());
-            cs.setInt(5, 1);
+            cs.setInt(5, Constants.getCurrentUserId());
             cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(7, "Update");
 
@@ -154,7 +155,7 @@ public class BrandDao {
             cs.setNull(2, java.sql.Types.VARCHAR);
             cs.setNull(3, java.sql.Types.INTEGER);
             cs.setNull(4, java.sql.Types.BOOLEAN);
-            cs.setInt(5, 1);
+            cs.setInt(5, Constants.getCurrentUserId());
             cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(7, "Delete");
 

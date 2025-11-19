@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CompanyModel {
+public class CompanyModel extends AbstractModel{
     private int companyId;
     private String companyName;
     private boolean isActive;

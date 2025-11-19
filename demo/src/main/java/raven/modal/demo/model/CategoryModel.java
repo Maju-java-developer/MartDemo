@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CategoryModel {
+public class CategoryModel extends AbstractModel{
     private int categoryId;
     private String categoryName;
     private boolean isActive;

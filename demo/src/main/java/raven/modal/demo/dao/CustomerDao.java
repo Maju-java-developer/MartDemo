@@ -2,6 +2,7 @@ package raven.modal.demo.dao;
 
 import raven.modal.demo.model.CustomerModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.CallableStatement;
@@ -51,7 +52,7 @@ public class CustomerDao {
             cs.setString(5, c.getAddress());
             cs.setString(6, c.getCity());
             cs.setBoolean(7, true);
-            cs.setInt(8, 1); // UserID todo UserId here later
+            cs.setInt(8, Constants.getCurrentUserId());
             cs.setTimestamp(9, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(10, "Save");
 
@@ -77,7 +78,7 @@ public class CustomerDao {
             cs.setString(5, c.getAddress());
             cs.setString(6, c.getCity());
             cs.setBoolean(7, c.getIsActive()); // default customer is true
-            cs.setInt(8, 1);
+            cs.setInt(8, Constants.getCurrentUserId());
             cs.setTimestamp(9, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(10, "Update");
 

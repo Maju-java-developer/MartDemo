@@ -2,6 +2,7 @@ package raven.modal.demo.dao;
 
 import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.CallableStatement;
@@ -25,7 +26,7 @@ public class PackingTypeDao {
             cs.setString(2, type.getPackingTypeName());      // title
             cs.setInt(3, type.getCartonQty());                // cartonQty
             cs.setBoolean(4, type.isActive());
-            cs.setInt(5, 1);
+            cs.setInt(5, Constants.getCurrentUserId());
             cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(7, "Save");
 
@@ -48,7 +49,7 @@ public class PackingTypeDao {
             cs.setString(2, type.getPackingTypeName());
             cs.setInt(3, type.getCartonQty());
             cs.setBoolean(4, type.isActive());
-            cs.setInt(5, 1);
+            cs.setInt(5, Constants.getCurrentUserId());
             cs.setTimestamp(6, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(7, "Update");
 

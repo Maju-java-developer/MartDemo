@@ -268,10 +268,10 @@ public class FormProducts extends Form {
 
             if (productId > 0) {
                 productModel.setProductId(productId);
-                productDao.updateProduct(productModel);
+                saveButtonAction(productModel);
                 SwingUtilities.getWindowAncestor(this).dispose();
             } else {
-                productDao.addProduct(productModel);
+                saveButtonAction(productModel);
                 clearForm();
             }
 
@@ -284,5 +284,22 @@ public class FormProducts extends Form {
     @Override
     public void formRefresh() {
         loadInitialData();
+    }
+
+    // Assuming you are inside the controller/form logic
+    public void saveButtonAction(ProductModel productModel) {
+        // 1. Determine status
+        String status = (productModel.getProductId() > 0) ? "Update" : "Save";
+
+        int returnCode = productDao.handleProductCRUD(productModel, status);
+
+        if (returnCode > 0) { // New ProductID returned
+            productModel.setProductId(returnCode); // Update model with new ID
+            JOptionPane.showMessageDialog(null, "Product saved successfully! New ID: " + returnCode, "Success", JOptionPane.INFORMATION_MESSAGE);
+        } else if (returnCode == -1) { // Update Success
+            JOptionPane.showMessageDialog(null, "Product updated successfully!", "Update Success", JOptionPane.INFORMATION_MESSAGE);
+        } else if (returnCode == -3) { // Duplicate Name Error
+            JOptionPane.showMessageDialog(null, "Error: A product with the same name and company already exists.", "Duplicate Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

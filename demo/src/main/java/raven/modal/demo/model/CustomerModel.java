@@ -9,14 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CustomerModel {
+public class CustomerModel extends AbstractModel{
     private Integer customerId;
     private String customerName;
     private String contactNo;
     private String address;
     private String email;
     private Double openingBalance;
-    private String createdDate;
     private Double taxPer;
     private String city;
     private Boolean isActive;

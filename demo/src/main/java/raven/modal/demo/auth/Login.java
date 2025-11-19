@@ -9,6 +9,7 @@ import raven.modal.demo.menu.MyDrawerBuilder;
 import raven.modal.demo.model.ModelUser;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.system.FormManager;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.awt.*;
@@ -117,9 +118,12 @@ public class Login extends Form {
                 return;
             }
 
+            Constants.currentUser = userModel;
+            System.out.println("UserId: " + Constants.currentUser.getUserId());
             // after success reset the username & password
             txtUsername.setText("");
             txtPassword.setText("");
+
             MyDrawerBuilder.getInstance().setUser(userModel);
             FormManager.login();
         });

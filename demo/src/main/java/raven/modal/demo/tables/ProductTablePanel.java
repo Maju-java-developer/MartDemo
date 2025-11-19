@@ -161,7 +161,7 @@ public class ProductTablePanel extends Form implements TableActions {
                             "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
                     if (confirm == JOptionPane.YES_OPTION) {
-                        productDao.deleteProductById(productId);
+                        deleteButtonAction(productId);
                         formRefresh(); // Refresh table after deletion
                     }
                 })
@@ -176,4 +176,19 @@ public class ProductTablePanel extends Form implements TableActions {
         formRefresh();
     }
 
+    public void deleteButtonAction(int productId) {
+        // 1. Create a minimal product model just for the ID
+        ProductModel productModel = new ProductModel();
+        productModel.setProductId(productId);
+
+        int returnCode = productDao.handleProductCRUD(productModel, "Delete");
+
+        if (returnCode == -2) { // Delete Success
+            JOptionPane.showMessageDialog(null, "Product ID " + productId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
+        } else if (returnCode == -4) { // Not Found
+            JOptionPane.showMessageDialog(null, "Product ID " + productId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
+        } else if (returnCode == 0) {
+            // Error already displayed by DAO (e.g., Integrity Constraint)
+        }
+    }
 }

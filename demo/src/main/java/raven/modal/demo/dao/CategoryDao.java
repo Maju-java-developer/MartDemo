@@ -2,6 +2,7 @@ package raven.modal.demo.dao;
 
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
 import java.sql.CallableStatement;
@@ -23,7 +24,7 @@ public class CategoryDao {
             cs.setNull(1, java.sql.Types.INTEGER);
             cs.setString(2, category.getCategoryName());
             cs.setBoolean(3, category.isActive());
-            cs.setInt(4, 1);
+            cs.setInt(4, Constants.getCurrentUserId()); // updated user id with currentId
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Save");
 
@@ -44,7 +45,7 @@ public class CategoryDao {
             cs.setInt(1, category.getCategoryId());
             cs.setString(2, category.getCategoryName());
             cs.setBoolean(3, category.isActive());
-            cs.setInt(4, 1);
+            cs.setInt(4, Constants.getCurrentUserId());
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Update");
 
@@ -65,7 +66,7 @@ public class CategoryDao {
             cs.setInt(1, categoryId);
             cs.setNull(2, java.sql.Types.VARCHAR);
             cs.setNull(3, java.sql.Types.BOOLEAN);
-            cs.setInt(4, 1);
+            cs.setInt(4, Constants.getCurrentUserId());
             cs.setTimestamp(5, new java.sql.Timestamp(System.currentTimeMillis()));
             cs.setString(6, "Delete");
 

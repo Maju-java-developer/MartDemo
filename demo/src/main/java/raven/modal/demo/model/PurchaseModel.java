@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class PurchaseModel {
+public class PurchaseModel extends AbstractModel{
 
     private int purchaseID;
     private int supplierID;
