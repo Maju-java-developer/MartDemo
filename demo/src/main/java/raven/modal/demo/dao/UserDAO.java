@@ -7,149 +7,92 @@ import raven.modal.demo.mysql.MySQLConnection;
 import raven.modal.demo.utils.HashUtils;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 @Getter
 public class UserDAO {
 
-//    /**
-//     * Authenticates a user against the 'user' table.
-//     * @param userName The username provided by the user.
-//     * @param password The password provided by the user.
-//     * @return UserModel object if credentials are valid, otherwise null.
-//     */
-//    public static UserModel authenticateUser(String userName, String password) {
-//        UserModel user = null;
-//
-//        // SQL query to select a user where both UserName and Password match
-//        String query = "SELECT UserID, UserName, Password FROM user WHERE UserName = ? AND Password = ?";
-//
-//        // Get the single connection instance
-//        try (Connection conn = MySQLConnection.getInstance().getConnection()) {
-//
-//            // Validate the connection before using it
-//            if (conn == null || conn.isClosed() || !conn.isValid(2)) {  // 2 seconds timeout for validation
-//                JOptionPane.showMessageDialog(null, "Connection is closed or invalid.");
-//                throw new SQLException("Connection is closed or invalid.");
-//            }
-//
-//            // 1. Create a PreparedStatement for safety
-//            try (PreparedStatement preparedStatement = conn.prepareStatement(query)) {
-//
-//                // 2. Set the parameters from the user input
-//                preparedStatement.setString(1, userName);
-//                preparedStatement.setString(2, password);
-//
-//                // 3. Execute the query
-//                try (ResultSet rs = preparedStatement.executeQuery()) {
-//
-//                    // 4. Check if a row was returned (i.e., authentication succeeded)
-//                    if (rs.next()) {
-//                        // Create and return the ModelUser object
-//                        int userID = rs.getInt("UserID");
-//                        String retrievedUserName = rs.getString("UserName");
-//                        String retrievedPassword = rs.getString("Password");
-//
-//                        user = new UserModel(userID, retrievedUserName, retrievedPassword);
-//                        System.out.println("Authentication Success for: " + userName);
-//                    } else {
-//                        // No matching user found
-//                        System.out.println("Authentication Failed: Invalid username or password.");
-//                    }
-//                }
-//
-//            }
-//
-//        } catch (SQLException e) {
-//            JOptionPane.showMessageDialog(null, "Database error during authentication: " + e.getMessage());
-//            System.err.println("Database error during authentication: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//
-//        return user;
-//    }
-
     /**
-     * Authenticates a user against the 'TBLUserLogin' table.
-     * @param userName The username provided by the user.
-     * @param password The password provided by the user.
-     * @return UserModel object if credentials are valid, otherwise null.
+     * Authenticates a user by calling the MySQL Stored Procedure SP_Auth_LoginUser.
+     * Hashing is performed in Java before calling the procedure.
+     * * @param userName The username provided by the user.
+     * @param password The raw password provided by the user.
+     * @return ModelUser object if credentials are valid, otherwise null.
      */
     public static ModelUser authenticateUser(String userName, String password) {
         ModelUser user = null;
 
-        // SQL query to select a user where both Username and PasswordHash match
-        String query = "SELECT ul.UserID, ul.Username, ul.PasswordHash, u.FullName, u.Email, u.ContactNo, ul.Role " +
-                "FROM TBLUserLogin ul " +
-                "INNER JOIN TBLUsers u ON ul.UserID = u.UserID " +
-                "WHERE ul.Username = ? AND ul.IsBlocked = FALSE";  // Ensure user is not blocked
+        // 1. Hash the input password in Java (This hash is passed to the SP for matching)
+        // NOTE: Ensure HashUtils.hashPassword(password) is available and uses the same algorithm as used during user registration.
+        String inputPasswordHash = HashUtils.hashPassword(password);
 
-        // Get the single connection instance
+        // 2. SQL to call the stored procedure
+        String storedProcCall = "{CALL SP_Auth_LoginUser(?, ?, ?)}";
+
+        // Get the current date/time for the LastLogin update in the database
+        Timestamp currentTimestamp = Timestamp.valueOf(LocalDateTime.now());
+
         try (Connection conn = MySQLConnection.getInstance().getConnection()) {
 
-            // Validate the connection before using it
-            if (conn == null || conn.isClosed() || !conn.isValid(2)) {  // 2 seconds timeout for validation
+            // Validate the connection
+            if (conn == null || conn.isClosed() || !conn.isValid(2)) {
                 JOptionPane.showMessageDialog(null, "Connection is closed or invalid.");
                 throw new SQLException("Connection is closed or invalid.");
             }
 
-            // 1. Create a PreparedStatement for safety
-            try (PreparedStatement preparedStatement = conn.prepareStatement(query)) {
+            // 3. Use CallableStatement to execute the SP
+            try (CallableStatement cs = conn.prepareCall(storedProcCall)) {
 
-                // 2. Set the parameters from the user input
-                preparedStatement.setString(1, userName);
+                // Set IN parameters for the SP
+                cs.setString(1, userName);
+                cs.setString(2, inputPasswordHash);
+                cs.setTimestamp(3, currentTimestamp);
 
-                // 3. Execute the query
-                try (ResultSet rs = preparedStatement.executeQuery()) {
+                // Execute the procedure (it returns a ResultSet with user data on success)
+                try (ResultSet rs = cs.executeQuery()) {
 
-                    // 4. Check if a row was returned (i.e., authentication succeeded)
+                    // 4. Check if the SP returned a user record
                     if (rs.next()) {
-                        // Get the hashed password and compare with the entered password
-                        String storedPasswordHash = rs.getString("PasswordHash");
+                        // Create the UserModel object from the retrieved data
+                        int userID = rs.getInt("UserID");
+                        String retrievedUserName = rs.getString("Username");
+                        String fullName = rs.getString("FullName");
+                        String email = rs.getString("Email");
+                        String contactNo = rs.getString("ContactNo");
 
-                        // Hash the input password (you can change this to use SHA2 or bcrypt, etc.)
-                        String inputPasswordHash = HashUtils.hashPassword(password); // Assuming you have a method to hash the password
+                        String roleString = rs.getString("Role");
+                        ModelUser.Role role = ModelUser.Role.fromString(roleString);
 
-                        // Compare the stored hash with the entered hash
-                        if (storedPasswordHash.equals(inputPasswordHash)) {
-                            // Create the UserModel object with user details
-                            int userID = rs.getInt("UserID");
-                            String retrievedUserName = rs.getString("Username");
-                            String fullName = rs.getString("FullName");
-                            String email = rs.getString("Email");
-                            String contactNo = rs.getString("ContactNo");
+                        // Assuming ModelUser.builder() pattern
+                        user = ModelUser.builder()
+                                .userId(userID)
+                                .userName(retrievedUserName)
+                                .fullName(fullName)
+                                .email(email)
+                                .contactNo(contactNo)
+                                .role(role)
+                                .build();
 
-                            String roleString = rs.getString("Role");
-                            ModelUser.Role role = ModelUser.Role.fromString(roleString);
-
-                            user = ModelUser.builder()
-                                    .userId(userID)
-                                    .userName(retrievedUserName)
-                                    .fullName(fullName)
-                                    .email(email)
-                                    .contactNo(contactNo)
-                                    .role(role)
-                                    .build();
-
-                            System.out.println("Authentication Success for: " + userName);
-                        } else {
-                            // Passwords don't match
-                            System.out.println("Authentication Failed: Invalid username or password.");
-                        }
+                        System.out.println("Authentication Success for: " + userName);
                     } else {
-                        // No matching user found
+                        // SP returned no rows (user not found or passwords did not match)
                         System.out.println("Authentication Failed: Invalid username or password.");
                     }
                 }
-
             }
-
         } catch (SQLException e) {
             JOptionPane.showMessageDialog(null, "Database error during authentication: " + e.getMessage());
             System.err.println("Database error during authentication: " + e.getMessage());
+            e.printStackTrace();
+        } catch (Exception e) {
+            // Catch exceptions from HashUtils or unexpected errors
+            System.err.println("Unexpected error during authentication: " + e.getMessage());
             e.printStackTrace();
         }
 
