@@ -3,151 +3,199 @@ package raven.modal.demo.dao;
 import raven.modal.demo.model.SaleDetailModel;
 import raven.modal.demo.model.SaleModel;
 import raven.modal.demo.mysql.MySQLConnection;
+import raven.modal.demo.utils.Constants;
 
 import javax.swing.*;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 public class SaleDao {
 
     /**
-     * Saves a new sale transaction.
-     * This is a complex transaction involving TBLSale, TBLSaleDetail, TBLStockLedger, and TBLCustomers.
+     * Serializes a list of SaleDetailModel objects into a JSON array string.
      */
-    public boolean saveSale(SaleModel saleModel) {
-        Connection conn = null;
+    private String serializeDetailsToJson(List<SaleDetailModel> details) {
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("[");
 
-        // 1. Calculate the net change to the Customer's balance
-        // A Sale DECREASES the customer's balance (they owe less)
-        // Net change = Total Owed (TotalAmount) - Total Paid (ReceivedAmount)
-        double netReceivableChange = saleModel.getTotalAmount() - saleModel.getReceivedAmount();
+        for (int i = 0; i < details.size(); i++) {
+            SaleDetailModel detail = details.get(i);
+
+            jsonBuilder.append("{");
+            jsonBuilder.append("\"productID\":").append(detail.getProductID()).append(",");
+            jsonBuilder.append("\"quantity\":").append(detail.getQuantity()).append(",");
+            jsonBuilder.append("\"rate\":").append(detail.getRate()).append(",");
+            jsonBuilder.append("\"productDiscount\":").append(detail.getProductDiscount()).append(",");
+            jsonBuilder.append("\"total\":").append(detail.getTotal());
+            jsonBuilder.append("}");
+
+            if (i < details.size() - 1) {
+                jsonBuilder.append(",");
+            }
+        }
+        jsonBuilder.append("]");
+        return jsonBuilder.toString();
+    }
+
+    public boolean handleSaleCRUD(SaleModel saleModel, String status) {
+        String sql = "{CALL SP_IUD_Sale(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
+
+        Connection conn = null;
 
         try {
             conn = MySQLConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); // Start transaction
+            conn.setAutoCommit(false);
 
-            // --- A. INSERT SALE HEADER (TBLSale) ---
-            String sqlHeader = "INSERT INTO TBLSale (CustomerID, SaleDate, InvoiceNo, TotalAmount, ReceivedAmount, Remarks, ActualAmount, GSTPercentage, GSTAmount, DiscountType, Discount) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            int saleId;
-            try (PreparedStatement ps = conn.prepareStatement(sqlHeader, Statement.RETURN_GENERATED_KEYS)) {
-                ps.setInt(1, saleModel.getCustomerID());
-                ps.setTimestamp(2, Timestamp.valueOf(saleModel.getSaleDate()));
-                ps.setString(3, saleModel.getInvoiceNo());
-                ps.setDouble(4, saleModel.getTotalAmount());
-                ps.setDouble(5, saleModel.getReceivedAmount());
-                ps.setString(6, saleModel.getRemarks());
-                ps.setDouble(7, saleModel.getActualAmount());
-                ps.setDouble(8, saleModel.getGstPer());
-                ps.setDouble(9, saleModel.getGstAmount());
-                ps.setString(10, saleModel.getDiscountType());
-                ps.setDouble(11, saleModel.getDiscountValue());
-                ps.executeUpdate();
+            CallableStatement cs = conn.prepareCall(sql);
 
-                try (ResultSet rs = ps.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        saleId = rs.getInt(1);
-                        saleModel.setSaleID(saleId);
-                    } else {
-                        throw new SQLException("Failed to retrieve Sale ID.");
-                    }
-                }
+            boolean isSave = status.equalsIgnoreCase("Save");
+            boolean isDelete = status.equalsIgnoreCase("Delete");
+
+            // Convert details → JSON (Only Save/Update)
+            String detailsJson = (!isDelete) ? serializeDetailsToJson(saleModel.getDetails()) : null;
+
+            // 1. SaleID (INOUT)
+            if (isSave) {
+                cs.setNull(1, Types.INTEGER);
+            } else {
+                cs.setInt(1, saleModel.getSaleID());
+            }
+            cs.registerOutParameter(1, Types.INTEGER);
+
+            // 2. CustomerID
+            cs.setInt(2, saleModel.getCustomerID());
+
+            // 3. SaleDate
+            cs.setTimestamp(3, Timestamp.valueOf(saleModel.getSaleDate()));
+
+            // 4. InvoiceNo (INOUT)
+            if (isSave) {
+                cs.setNull(4, Types.VARCHAR);
+            } else {
+                cs.setString(4, saleModel.getInvoiceNo());
+            }
+            cs.registerOutParameter(4, Types.VARCHAR);
+
+            // 5-12 Header Fields
+            cs.setDouble(5, saleModel.getActualAmount());
+            cs.setDouble(6, saleModel.getGstPer());
+            cs.setDouble(7, saleModel.getGstAmount());
+            cs.setString(8, saleModel.getDiscountType());
+            cs.setDouble(9, saleModel.getDiscountValue());
+            cs.setDouble(10, saleModel.getTotalAmount());
+            cs.setDouble(11, saleModel.getReceivedAmount());
+            cs.setString(12, saleModel.getRemarks());
+
+            // 13. DateTime
+            cs.setTimestamp(13, Timestamp.valueOf(LocalDateTime.now()));
+
+            // 14. UserID
+            cs.setInt(14, Constants.getCurrentUserId());
+
+            // 15. Status
+            cs.setString(15, status);
+
+            // 16. Details JSON
+            if (!isDelete) {
+                cs.setString(16, detailsJson);
+            } else {
+                cs.setNull(16, Types.VARCHAR);
             }
 
-            // --- B. INSERT SALE DETAILS AND UPDATE STOCK LEDGER ---
-            String sqlDetail = "INSERT INTO TBLSaleDetail (SaleID, ProductID, Quantity, Rate, Total, ProductDiscount) VALUES (?, ?, ?, ?, ?, ?)";
-            String sqlStock = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyOut, Rate) VALUES (?, 'SALE', ?, ?, ?, ?)";
+            // 17. Return Code (OUT)
+            cs.registerOutParameter(17, Types.INTEGER);
 
-            try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail, Statement.RETURN_GENERATED_KEYS);
-                 PreparedStatement psStock = conn.prepareStatement(sqlStock)) {
+            // Execute
+            cs.executeUpdate();
 
-                for (SaleDetailModel detail : saleModel.getDetails()) {
-                    // i. Insert Sale Detail
-                    psDetail.setInt(1, saleId);
-                    psDetail.setInt(2, detail.getProductID());
-                    psDetail.setDouble(3, detail.getQuantity());
-                    psDetail.setDouble(4, detail.getRate());
-                    psDetail.setDouble(5, detail.getTotal());
-                    psDetail.setDouble(6, detail.getProductDiscount());
-                    psDetail.executeUpdate();
+            // Read OUT parameters
+            int saleID = cs.getInt(1);
+            String invoiceNo = cs.getString(4);
+            int result = cs.getInt(17);
 
-                    int saleDetailId;
-                    try (ResultSet rs = psDetail.getGeneratedKeys()) {
-                        if (rs.next()) {
-                            saleDetailId = rs.getInt(1);
-                        } else {
-                            throw new SQLException("Failed to retrieve Sale Detail ID.");
-                        }
-                    }
-
-                    // ii. Insert Stock Ledger Entry (QtyOut)
-                    psStock.setInt(1, detail.getProductID());
-                    psStock.setInt(2, saleId);
-                    psStock.setInt(3, saleDetailId);
-                    psStock.setDouble(4, detail.getQuantity()); // QtyOut
-                    psStock.setDouble(5, detail.getRate());
-                    psStock.executeUpdate();
-
-                    // TODO: CRITICAL STEP: Update TBLProducts.CurrentStock - Omitted for now, but necessary
-                }
+            if (result <= 0) {
+                conn.rollback();
+                return false;
             }
 
-            // A Sale INCREASES the customer's OutstandingBalance (they owe more)
-            updateCustomerBalanceInTransaction(conn, saleModel.getCustomerID(), netReceivableChange);
             conn.commit();
+
+            // Success Messages
+            switch (result) {
+                case -1:
+                    JOptionPane.showMessageDialog(null, "Sale Updated Successfully!", "Updated",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    break;
+                case -2:
+                    JOptionPane.showMessageDialog(null, "Sale Deleted Successfully!", "Deleted",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    break;
+                default:
+                    JOptionPane.showMessageDialog(null, "Sale Saved!\nID: " + saleID + "\nInvoice: " + invoiceNo,
+                            "Saved", JOptionPane.INFORMATION_MESSAGE);
+            }
+
             return true;
 
-        } catch (SQLException e) {
-            System.err.println("Sale Save Transaction failed. Rolling back: " + e.getMessage());
+        } catch (Exception e) {
             try {
-                if (conn != null) conn.rollback();
-            } catch (SQLException ex) { ex.printStackTrace(); }
-            JOptionPane.showMessageDialog(null, "Sale record failed due to a database error. Details: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+                if (conn != null)
+                    conn.rollback();
+            } catch (Exception ignore) {
+            }
+            JOptionPane.showMessageDialog(null, "Database Error: " + e.getMessage(), "Error",
+                    JOptionPane.ERROR_MESSAGE);
             return false;
         } finally {
             try {
-                if (conn != null) {
+                if (conn != null)
                     conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) { e.printStackTrace(); }
+            } catch (Exception ignore) {
+            }
         }
     }
 
-    // --- Helper Methods ---
+    public boolean saveSale(SaleModel saleModel) {
+        return handleSaleCRUD(saleModel, "Save");
+    }
 
-    /**
-     * Helper method to update the customer balance using an existing connection/transaction.
-     */
-    private void updateCustomerBalanceInTransaction(Connection conn, int customerId, double netChange) throws SQLException {
-        // TBLCustomers.OutstandingBalance is increased by the net receivable change (Total - Received)
-        String sqlBalance = "UPDATE TBLCustomers SET OpeningBalance = OpeningBalance + ? WHERE CustomerID = ?";
-        try (PreparedStatement psBalance = conn.prepareStatement(sqlBalance)) {
-            psBalance.setDouble(1, netChange);
-            psBalance.setInt(2, customerId);
+    public boolean updateSale(SaleModel saleModel) {
+        return handleSaleCRUD(saleModel, "Update");
+    }
 
-            if (psBalance.executeUpdate() == 0) {
-                throw new SQLException("Failed to update customer outstanding balance (ID: " + customerId + ")");
-            }
+    public boolean deleteSale(int saleId) {
+        // For delete, we need to fetch the sale first to pass required fields (like
+        // CustomerID for reversal)
+        // However, the SP handles reversal by looking up the ID.
+        // But we need to pass a SaleModel to handleSaleCRUD.
+        // We can create a dummy model with just the ID, but the SP might expect other
+        // fields not to be null if we were strict.
+        // In our SP, for DELETE, we only use SaleID to look up the record for reversal.
+        // But we pass CustomerID etc. as parameters.
+        // Let's fetch the sale first to be safe and pass valid data.
+        SaleModel sale = getSaleForEdit(saleId);
+        if (sale == null) {
+            JOptionPane.showMessageDialog(null, "Sale not found for deletion.", "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
         }
+        return handleSaleCRUD(sale, "Delete");
     }
 
     /**
      * Checks the current stock level for a product.
-     * In a real system, this would often be complex (FIFO, LIFO, etc.), but here
-     * we will calculate it by summing QtyIn and subtracting QtyOut from TBLStockLedger.
      */
     public double getAvailableStock(int productId) {
-        // NOTE: This query calculates stock based on the TBLStockLedger history.
-        // If TBLProducts holds the current stock, use that field instead for performance.
         String sql = "SELECT SUM(QtyIn) - SUM(QtyOut) AS CurrentStock FROM TBLStockLedger WHERE ProductID = ?";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, productId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -160,6 +208,7 @@ public class SaleDao {
         }
         return 0.0;
     }
+
     /**
      * Fetches a paginated list of sales history.
      */
@@ -172,7 +221,7 @@ public class SaleDao {
         List<SaleModel> sales = new ArrayList<>();
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, limit);
             ps.setInt(2, offset);
@@ -199,8 +248,6 @@ public class SaleDao {
         }
         return sales;
     }
-    // TODO: Implement getSales(), getSaleCount(), getSaleForEdit(), updateSale(), deleteSale()
-// Inside SaleDao.java
 
     /**
      * Returns the total number of sale records.
@@ -208,8 +255,8 @@ public class SaleDao {
     public int getSaleCount() {
         String sql = "SELECT COUNT(*) FROM TBLSale";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             if (rs.next()) {
                 return rs.getInt(1);
@@ -219,7 +266,6 @@ public class SaleDao {
         }
         return 0;
     }
-    // Inside SaleDao.java
 
     /**
      * Fetches sale header and all associated details for editing.
@@ -238,20 +284,21 @@ public class SaleDao {
                 psHeader.setInt(1, saleId);
                 try (ResultSet rs = psHeader.executeQuery()) {
                     if (rs.next()) {
-                        // NOTE: Header discount fields are not in TBLSale yet,
-                        // but we include placeholders for full implementation.
                         sale = SaleModel.builder()
                                 .saleID(rs.getInt("SaleID"))
                                 .customerID(rs.getInt("CustomerID"))
                                 .customerName(rs.getString("CustomerName"))
                                 .saleDate(rs.getTimestamp("SaleDate").toLocalDateTime())
                                 .invoiceNo(rs.getString("InvoiceNo"))
-                                // Assuming TotalAmount includes GST, ActualAmount is net/taxable base
                                 .totalAmount(rs.getDouble("TotalAmount"))
                                 .receivedAmount(rs.getDouble("ReceivedAmount"))
+                                .actualAmount(rs.getDouble("ActualAmount"))
+                                .gstPer(rs.getDouble("GSTPercentage"))
+                                .gstAmount(rs.getDouble("GSTAmount"))
+                                .discountType(rs.getString("DiscountType"))
+                                .discountValue(rs.getDouble("Discount"))
                                 .remarks(rs.getString("Remarks"))
                                 .details(new ArrayList<>())
-                                // TODO: Load discountType, discountValue from TBLSale if added later
                                 .build();
                     } else {
                         return null;
@@ -277,8 +324,8 @@ public class SaleDao {
                                 .unitsPerCarton(rs.getInt("UnitPerCarton"))
                                 .quantity(rs.getDouble("Quantity"))
                                 .rate(rs.getDouble("Rate"))
-                                // .lineDiscount(rs.getDouble("LineDiscount"))
-                                .total(rs.getDouble("Total")) // This is the net value of the row
+                                .productDiscount(rs.getDouble("ProductDiscount"))
+                                .total(rs.getDouble("Total"))
                                 .build();
                         sale.getDetails().add(detail);
                     }
@@ -291,282 +338,4 @@ public class SaleDao {
         }
         return sale;
     }
-    // Inside SaleDao.java
-
-    /**
-     * Updates an existing sale transaction. Reverses old stock/ledger and applies new.
-     */
-    public boolean updateSale(SaleModel saleModel) {
-        Connection conn = null;
-        int saleId = saleModel.getSaleID();
-
-        // 1. Fetch OLD totals for reversal
-        SaleModel oldSale = getOldSaleTotals(saleId); // Need to implement this helper
-        if (oldSale == null) {
-            JOptionPane.showMessageDialog(null, "Cannot find original sale to update.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        // New Net Receivable change
-        double newNetReceivableChange = saleModel.getTotalAmount() - saleModel.getReceivedAmount();
-        // Old Net Receivable change
-        double oldNetReceivableChange = oldSale.getTotalAmount() - oldSale.getReceivedAmount();
-
-        try {
-            conn = MySQLConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); // Start transaction
-
-            // --- A. LEDGER REVERSAL ---
-            // Reversal: The original sale ADDED oldNetReceivableChange. Subtract it back.
-            updateCustomerBalanceInTransaction(conn, oldSale.getCustomerID(), -oldNetReceivableChange);
-
-            // --- B. STOCK REVERSAL & DETAIL DELETION ---
-            // Reversing stock for a sale means inserting a QtyIn entry (a 'Sale Reversal')
-            reverseStockAndDetails(conn, saleId, oldSale.getDetails()); // Need to implement this helper
-
-            // --- C. UPDATE HEADER (TBLSale) ---
-            // NOTE: SQL needs to match the fields in TBLSale (InvoiceNo, TotalAmount, ReceivedAmount, Remarks, etc.)
-            String sqlUpdateHeader = "UPDATE TBLSale SET CustomerID=?, SaleDate=?, InvoiceNo=?, TotalAmount=?, ReceivedAmount=?, Remarks=? WHERE SaleID=?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlUpdateHeader)) {
-                ps.setInt(1, saleModel.getCustomerID());
-                ps.setTimestamp(2, Timestamp.valueOf(saleModel.getSaleDate()));
-                ps.setString(3, saleModel.getInvoiceNo());
-                ps.setDouble(4, saleModel.getTotalAmount());
-                ps.setDouble(5, saleModel.getReceivedAmount());
-                ps.setString(6, saleModel.getRemarks());
-                ps.setInt(7, saleId);
-
-                if (ps.executeUpdate() == 0) {
-                    throw new SQLException("Failed to update sale header.");
-                }
-            }
-
-            // --- D. INSERT NEW DETAILS AND UPDATE STOCK LEDGER ---
-            insertNewDetailsAndStock(conn, saleId, saleModel.getDetails()); // Need to implement this helper
-
-            // --- E. APPLY NEW LEDGER CHANGE ---
-            // Apply: The new sale ADDS the newNetReceivableChange.
-            updateCustomerBalanceInTransaction(conn, saleModel.getCustomerID(), newNetReceivableChange);
-
-            // --- F. COMMIT ---
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            System.err.println("Sale Update Transaction failed. Rolling back: " + e.getMessage());
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            JOptionPane.showMessageDialog(null, "Sale update failed due to a database error.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        } finally {
-            try { if (conn != null) conn.setAutoCommit(true); conn.close(); } catch (SQLException e) { e.printStackTrace(); }
-        }
-    }
-    // Inside SaleDao.java
-
-    /**
-     * Deletes a sale transaction, performing ledger and stock reversal.
-     */
-    public boolean deleteSale(int saleId) {
-        Connection conn = null;
-
-        // 1. Fetch OLD totals and details for reversal
-        SaleModel oldSale = getOldSaleForReversal(saleId); // Need a helper that gets both header and details
-        if (oldSale == null) {
-            JOptionPane.showMessageDialog(null, "Cannot find original sale to delete.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-
-        // Old Net Receivable change
-        double oldNetReceivableChange = oldSale.getTotalAmount() - oldSale.getReceivedAmount();
-
-        try {
-            conn = MySQLConnection.getInstance().getConnection();
-            conn.setAutoCommit(false); // Start transaction
-
-            // --- A. LEDGER REVERSAL ---
-            // Reversal: Subtract the change that the original sale added.
-            updateCustomerBalanceInTransaction(conn, oldSale.getCustomerID(), -oldNetReceivableChange);
-
-            // --- B. STOCK REVERSAL & DETAIL DELETION ---
-            reverseStockAndDetails(conn, saleId, oldSale.getDetails());
-
-            // --- C. DELETE SALE HEADER (TBLSale) ---
-            String sqlDeleteHeader = "DELETE FROM TBLSale WHERE SaleID = ?";
-            try (PreparedStatement ps = conn.prepareStatement(sqlDeleteHeader)) {
-                ps.setInt(1, saleId);
-                if (ps.executeUpdate() == 0) {
-                    throw new SQLException("Failed to delete sale header.");
-                }
-            }
-
-            // --- D. COMMIT ---
-            conn.commit();
-            return true;
-
-        } catch (SQLException e) {
-            System.err.println("Sale Deletion Transaction failed. Rolling back: " + e.getMessage());
-            try { if (conn != null) conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
-            JOptionPane.showMessageDialog(null, "Sale deletion failed due to a database error.", "DB Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        } finally {
-            try {
-                if (conn != null) {
-                    conn.setAutoCommit(true);
-                    conn.close();
-                }
-            } catch (SQLException e) { e.printStackTrace(); }
-        }
-    }
-    // Inside SaleDao.java
-
-    /**
-     * Inserts QtyIn entries to TBLStockLedger to reverse the sale's stock impact,
-     * then deletes TBLSaleDetail and TBLStockLedger entries linked to the SaleID.
-     */
-    private void reverseStockAndDetails(Connection conn, int saleId, List<SaleDetailModel> oldDetails) throws SQLException {
-
-        // 1. Insert QtyIn to reverse the original stock outflow
-        String sqlStockIn = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, QtyIn, Rate) VALUES (?, 'SALE_REVERSAL', ?, ?, ?)";
-        try (PreparedStatement psStockIn = conn.prepareStatement(sqlStockIn)) {
-            for (SaleDetailModel detail : oldDetails) {
-                psStockIn.setInt(1, detail.getProductID());
-                psStockIn.setInt(2, saleId);
-                psStockIn.setDouble(3, detail.getQuantity()); // QtyIn
-                psStockIn.setDouble(4, detail.getRate());
-                psStockIn.addBatch();
-
-                // TODO: CRITICAL STEP: Update TBLProducts.CurrentStock - Add back the quantity
-            }
-            psStockIn.executeBatch();
-        }
-
-        // 2. Delete old TBLSaleDetail entries
-        String sqlDeleteDetails = "DELETE FROM TBLSaleDetail WHERE SaleID = ?";
-        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteDetails)) {
-            ps.setInt(1, saleId);
-            ps.executeUpdate();
-        }
-
-        // 3. Delete old TBLStockLedger entries (The original QtyOut records)
-        // NOTE: Deleting the original QtyOut records while keeping the QtyIn reversal
-        // simplifies history, but might be debated. For now, we will delete the original
-        // TBLStockLedger records linked to the SaleID as well, leaving only the reversal entry.
-        String sqlDeleteStock = "DELETE FROM TBLStockLedger WHERE RefID = ? AND RefType = 'SALE'";
-        try (PreparedStatement ps = conn.prepareStatement(sqlDeleteStock)) {
-            ps.setInt(1, saleId);
-            ps.executeUpdate();
-        }
-    }
-    // Helper method
-    /**
-     * Fetches only the necessary header fields of an existing sale for ledger reversal.
-     * Used to calculate the old net receivable change (TotalAmount - ReceivedAmount).
-     */
-    private SaleModel getOldSaleTotals(int saleId) {
-        String sql = "SELECT CustomerID, TotalAmount, ReceivedAmount FROM TBLSale WHERE SaleID = ?";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, saleId);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return SaleModel.builder()
-                            .saleID(saleId)
-                            .customerID(rs.getInt("CustomerID"))
-                            .totalAmount(rs.getDouble("TotalAmount"))
-                            .receivedAmount(rs.getDouble("ReceivedAmount"))
-                            .build();
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error fetching old sale totals: " + e.getMessage());
-        }
-        return null;
-    }
-    /**
-     * Fetches header and details for stock/ledger reversal during update/delete.
-     * Fetches required fields to reverse stock (QtyOut) and ledger.
-     */
-    private SaleModel getOldSaleForReversal(int saleId) {
-        SaleModel sale = getOldSaleTotals(saleId); // Reuse the header fetching logic
-        if (sale == null) {
-            return null;
-        }
-
-        // Fetch only the details required for reversal (ProductID, Quantity, Rate)
-        String sqlDetails = "SELECT SaleDetailID, ProductID, Quantity, Rate FROM TBLSaleDetail WHERE SaleID = ?";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement psDetails = conn.prepareStatement(sqlDetails)) {
-
-            psDetails.setInt(1, saleId);
-
-            List<SaleDetailModel> details = new ArrayList<>();
-            try (ResultSet rs = psDetails.executeQuery()) {
-                while (rs.next()) {
-                    details.add(SaleDetailModel.builder()
-                            .saleDetailID(rs.getInt("SaleDetailID"))
-                            .productID(rs.getInt("ProductID"))
-                            .quantity(rs.getDouble("Quantity")) // Qty to reverse
-                            .rate(rs.getDouble("Rate"))
-                            .build());
-                }
-            }
-            sale.setDetails(details);
-
-        } catch (SQLException e) {
-            System.err.println("Error fetching old sale details for reversal: " + e.getMessage());
-            return null;
-        }
-        return sale;
-    }
-    /**
-     * Inserts new sale details and corresponding QtyOut stock ledger entries.
-     * Executes within an active transaction (uses provided Connection conn).
-     */
-    private void insertNewDetailsAndStock(Connection conn, int saleId, List<SaleDetailModel> newDetails) throws SQLException {
-
-        // SQL for TBLSaleDetail insertion (Total amount is the Net price after line discount)
-        String sqlDetail = "INSERT INTO TBLSaleDetail (SaleID, ProductID, Quantity, Rate, Total) VALUES (?, ?, ?, ?, ?)";
-
-        // SQL for TBLStockLedger insertion (This is the QtyOut entry)
-        String sqlStock = "INSERT INTO TBLStockLedger (ProductID, RefType, RefID, RefDetailID, QtyOut, Rate) VALUES (?, 'SALE', ?, ?, ?, ?)";
-
-        try (PreparedStatement psDetail = conn.prepareStatement(sqlDetail, Statement.RETURN_GENERATED_KEYS);
-             PreparedStatement psStock = conn.prepareStatement(sqlStock)) {
-
-            for (SaleDetailModel detail : newDetails) {
-
-                // i. Insert Sale Detail
-                psDetail.setInt(1, saleId);
-                psDetail.setInt(2, detail.getProductID());
-                psDetail.setDouble(3, detail.getQuantity());
-                psDetail.setDouble(4, detail.getRate());
-                psDetail.setDouble(5, detail.getTotal());
-                psDetail.executeUpdate();
-
-                int saleDetailId;
-                try (ResultSet rs = psDetail.getGeneratedKeys()) {
-                    if (rs.next()) {
-                        saleDetailId = rs.getInt(1);
-                    } else {
-                        throw new SQLException("Failed to retrieve new Sale Detail ID during update insertion.");
-                    }
-                }
-
-                // ii. Insert Stock Ledger Entry (QtyOut)
-                psStock.setInt(1, detail.getProductID());
-                psStock.setInt(2, saleId);
-                psStock.setInt(3, saleDetailId);
-                psStock.setDouble(4, detail.getQuantity()); // QtyOut
-                psStock.setDouble(5, detail.getRate());
-                psStock.executeUpdate();
-
-                // TODO: CRITICAL STEP: Update TBLProducts.CurrentStock - Subtract the quantity
-            }
-        }
-    }
-
 }

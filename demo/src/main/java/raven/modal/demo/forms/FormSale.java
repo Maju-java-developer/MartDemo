@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-@SystemForm(name = "New Sale", description = "Record new customer sales and track inventory", tags = {"sale", "form", "customer"})
+@SystemForm(name = "New Sale", description = "Record new customer sales and track inventory", tags = { "sale", "form",
+        "customer" })
 public class FormSale extends Form implements TableActions {
 
     // --- Detail Row Input Components ---
@@ -160,7 +161,8 @@ public class FormSale extends Form implements TableActions {
         leftPanel.add(scrollComment, "h 60!");
 
         // Right Column (Summary: Actual, GST, Discount, Total, Received)
-        JPanel rightPanel = new JPanel(new MigLayout("wrap 6, fillx, insets 0", "[right][60][right][60][right][60]", ""));
+        JPanel rightPanel = new JPanel(
+                new MigLayout("wrap 6, fillx, insets 0", "[right][60][right][60][right][60]", ""));
         txtActualAmount = new JTextField("0.00");
         txtGSTRate = new JTextField(String.format("%.2f", Constants.DEFAULT_GST_RATE));
         txtGSTAmount = new JTextField("0.00");
@@ -195,7 +197,6 @@ public class FormSale extends Form implements TableActions {
 
         rightPanel.add(new JLabel("Receiving Amount"));
         rightPanel.add(txtReceivingAmount, "span 5, h 30!, w 120");
-
 
         // Button Row
         JPanel buttonPanel = new JPanel(new MigLayout("right, insets 10 0 0 0", "[][][]"));
@@ -232,18 +233,21 @@ public class FormSale extends Form implements TableActions {
         // Load Customers for Customer dropdown
         List<CustomerModel> customers = customerDao.getActiveCustomersForDropdown();
         cmbCustomer.setModel(new DefaultComboBoxModel<>(customers.toArray(new CustomerModel[0])));
-        ComboBoxUtils.setupComboBoxRenderer(cmbCustomer, model -> ((CustomerModel)model).getCustomerName());
+        ComboBoxUtils.setupComboBoxRenderer(cmbCustomer, model -> ((CustomerModel) model).getCustomerName());
 
         cmbDiscountType.setModel(new DefaultComboBoxModel<>(Constants.DISCOUNT_TYPES));
 
         // Load all products for the searchable combo box
         allProductsCache = productDao.getAllActiveProducts();
-        // The combo box model will be dynamically populated by performSearch/setupProductSearchCombo
+        // The combo box model will be dynamically populated by
+        // performSearch/setupProductSearchCombo
     }
 
     private void setupDetailTableModel() {
-        // New columns: Discount is added, Total is calculated differently (after line discount)
-        String[] columns = {"Sr#", "Product", "Qty", "Unit Price", "Discount", "Total", "Action", "ProductID", "PeckingTypeID"};
+        // New columns: Discount is added, Total is calculated differently (after line
+        // discount)
+        String[] columns = { "Sr#", "Product", "Qty", "Unit Price", "Discount", "Total", "Action", "ProductID",
+                "PeckingTypeID" };
 
         detailModel = new DefaultTableModel(columns, 0) {
             @Override
@@ -270,8 +274,10 @@ public class FormSale extends Form implements TableActions {
         detailTable.getTableHeader().setDefaultRenderer(new TableHeaderAlignment(detailTable) {
             @Override
             protected int getAlignment(int column) {
-                if (column >= 2 && column <= 5) return SwingConstants.RIGHT; // Qty, Price, Discount, Total
-                if (column == 6) return SwingConstants.CENTER;
+                if (column >= 2 && column <= 5)
+                    return SwingConstants.RIGHT; // Qty, Price, Discount, Total
+                if (column == 6)
+                    return SwingConstants.CENTER;
                 return SwingConstants.LEADING;
             }
         });
@@ -308,7 +314,8 @@ public class FormSale extends Form implements TableActions {
         editor.addKeyListener(new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                if (e.getKeyCode() != KeyEvent.VK_ENTER && e.getKeyCode() != KeyEvent.VK_DOWN && e.getKeyCode() != KeyEvent.VK_UP) {
+                if (e.getKeyCode() != KeyEvent.VK_ENTER && e.getKeyCode() != KeyEvent.VK_DOWN
+                        && e.getKeyCode() != KeyEvent.VK_UP) {
                     performSearch(editor.getText());
                 }
             }
@@ -357,16 +364,19 @@ public class FormSale extends Form implements TableActions {
             }
 
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Invalid quantity, unit price, or discount.", "Validation", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid quantity, unit price, or discount.", "Validation",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
         // TODO: CRITICAL STOCK CHECK (Placeholder)
-//         double availableStock = saleDao.getAvailableStock(selectedProduct.getProductId());
-//         if (totalQuantity > availableStock) {
-//             JOptionPane.showMessageDialog(this, "Insufficient stock: Only " + availableStock + " available.", "Stock Error", JOptionPane.ERROR_MESSAGE);
-//             return;
-//         }
+        // double availableStock =
+        // saleDao.getAvailableStock(selectedProduct.getProductId());
+        // if (totalQuantity > availableStock) {
+        // JOptionPane.showMessageDialog(this, "Insufficient stock: Only " +
+        // availableStock + " available.", "Stock Error", JOptionPane.ERROR_MESSAGE);
+        // return;
+        // }
 
         int unitsPerCarton = selectedProduct.getUnitsPerCarton();
         double totalQuantity = (cartons * unitsPerCarton) + units;
@@ -374,10 +384,11 @@ public class FormSale extends Form implements TableActions {
         // Calculate total price after discount
         double grossPrice = totalQuantity * unitPrice;
         double netPrice = grossPrice - productDiscount;
-        if (netPrice < 0) netPrice = 0;
+        if (netPrice < 0)
+            netPrice = 0;
 
         // --- Add Row ---
-        detailModel.addRow(new Object[]{
+        detailModel.addRow(new Object[] {
                 detailModel.getRowCount() + 1, // Sr#
                 selectedProduct.getProductName(),
                 totalQuantity,
@@ -420,7 +431,8 @@ public class FormSale extends Form implements TableActions {
             try {
                 // Total column is at index 5 (Net Price after line discount)
                 actualAmount += Double.parseDouble(detailModel.getValueAt(i, 5).toString());
-            } catch (NumberFormatException ignored) {}
+            } catch (NumberFormatException ignored) {
+            }
         }
         txtActualAmount.setText(String.format("%.2f", actualAmount));
         updateFinalTotals(actualAmount);
@@ -432,7 +444,8 @@ public class FormSale extends Form implements TableActions {
         double discountValue = 0.0;
         try {
             discountValue = Double.parseDouble(txtDiscountValue.getText().trim());
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
 
         double finalDiscount = 0.0;
         if (Constants.DISCOUNT_TYPE_PERCENTAGE.equals(type)) {
@@ -442,7 +455,8 @@ public class FormSale extends Form implements TableActions {
         }
 
         double amountAfterDiscount = amountBeforeDiscount - finalDiscount;
-        if (amountAfterDiscount < 0) amountAfterDiscount = 0;
+        if (amountAfterDiscount < 0)
+            amountAfterDiscount = 0;
 
         // 2. Apply GST
         double gstRate = Constants.DEFAULT_GST_RATE;
@@ -455,7 +469,8 @@ public class FormSale extends Form implements TableActions {
         txtGSTAmount.setText(String.format("%.2f", gstAmount));
         txtTotalAmount.setText(String.format("%.2f", finalTotal));
 
-        // Ensure Receiving Amount doesn't exceed the new total if it was set higher before calculation
+        // Ensure Receiving Amount doesn't exceed the new total if it was set higher
+        // before calculation
         validateReceivingAmount();
     }
 
@@ -466,13 +481,12 @@ public class FormSale extends Form implements TableActions {
 
             if (receivedAmount < 0) {
                 txtReceivingAmount.setText("0.00");
-            }
-            else if (receivedAmount > totalAmount) {
+            } else if (receivedAmount > totalAmount) {
                 txtReceivingAmount.setText(String.format("%.2f", totalAmount));
             }
-        } catch (NumberFormatException ignored) {}
+        } catch (NumberFormatException ignored) {
+        }
     }
-
 
     // --- Save and Action Logic ---
 
@@ -484,7 +498,8 @@ public class FormSale extends Form implements TableActions {
             return;
         }
         if (detailModel.getRowCount() == 0) {
-            JOptionPane.showMessageDialog(this, "Please add at least one item to the sale.", "Validation", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Please add at least one item to the sale.", "Validation",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
@@ -496,7 +511,8 @@ public class FormSale extends Form implements TableActions {
             receivedAmount = Double.parseDouble(txtReceivingAmount.getText().trim());
             discountValue = Double.parseDouble(txtDiscountValue.getText().trim());
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Invalid number format detected in summary fields.", "Data Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Invalid number format detected in summary fields.", "Data Error",
+                    JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -508,12 +524,15 @@ public class FormSale extends Form implements TableActions {
                         .productID((int) detailModel.getValueAt(i, 7)) // Index 7: Hidden ProductID
                         .quantity(Double.parseDouble(detailModel.getValueAt(i, 2).toString())) // Index 2: Total Qty
                         .rate(Double.parseDouble(detailModel.getValueAt(i, 3).toString())) // Index 3: Unit Price
-                        .productDiscount(Double.parseDouble(detailModel.getValueAt(i, 4).toString())) // Index 4: Line Discount
+                        .productDiscount(Double.parseDouble(detailModel.getValueAt(i, 4).toString())) // Index 4: Line
+                                                                                                      // Discount
                         .total(Double.parseDouble(detailModel.getValueAt(i, 5).toString())) // Index 5: Net Price
                         .build());
 
             } catch (NumberFormatException | ClassCastException e) {
-                JOptionPane.showMessageDialog(this, "Error in detail table data (Row " + (i + 1) + "). Please re-add the item.", "Data Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this,
+                        "Error in detail table data (Row " + (i + 1) + "). Please re-add the item.", "Data Error",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
         }
@@ -536,10 +555,9 @@ public class FormSale extends Form implements TableActions {
                 .build();
 
         if (saleId > 0) {
-             saleDao.updateSale(saleModel);
+            saleDao.updateSale(saleModel);
         } else {
             saleDao.saveSale(saleModel);
-            JOptionPane.showMessageDialog(this, "New Sale has been done!", "Success Sale", JOptionPane.INFORMATION_MESSAGE);
             clearForm();
         }
 
@@ -550,7 +568,8 @@ public class FormSale extends Form implements TableActions {
         KeyAdapter detailKeyAdapter = new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                // calculateDetailRowTotal(); // Helper method to update the row price fields (if any)
+                // calculateDetailRowTotal(); // Helper method to update the row price fields
+                // (if any)
             }
         };
 
@@ -580,16 +599,17 @@ public class FormSale extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         // The actions are the same as Purchase: Edit and Delete line items
-        return new ActionItem[]{
-//                new ActionItem("Edit", (table1, row) -> {
-//                    // TODO: Implement Edit line item logic (similar to FormPurchase)
-//                    // 1. Get ProductID, Qty, Price, Discount
-//                    // 2. Calculate Cartons/Units
-//                    // 3. Populate top input fields (cmbProductSearch, txtCartons, etc.)
-//                    // 4. Delete the original row
-//                }),
+        return new ActionItem[] {
+                // new ActionItem("Edit", (table1, row) -> {
+                // // TODO: Implement Edit line item logic (similar to FormPurchase)
+                // // 1. Get ProductID, Qty, Price, Discount
+                // // 2. Calculate Cartons/Units
+                // // 3. Populate top input fields (cmbProductSearch, txtCartons, etc.)
+                // // 4. Delete the original row
+                // }),
                 new ActionItem("Delete", (table1, row) -> {
-                    if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this line item?", "Confirm Deletion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                    if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this line item?",
+                            "Confirm Deletion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         onDelete(row);
                     }
                 })
@@ -599,7 +619,7 @@ public class FormSale extends Form implements TableActions {
     public void onDelete(int row) {
         detailModel.removeRow(row);
         // Re-sequence Sr# column
-        for(int i = 0; i < detailModel.getRowCount(); i++) {
+        for (int i = 0; i < detailModel.getRowCount(); i++) {
             detailModel.setValueAt(i + 1, i, 0);
         }
         updateActualAmount(); // Recalculate totals
