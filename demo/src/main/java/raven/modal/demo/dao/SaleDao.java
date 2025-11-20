@@ -171,80 +171,35 @@ public class SaleDao {
         return handleSaleCRUD(saleModel, "Update");
     }
 
-    public boolean deleteSale(int saleId) {
-        // For delete, we need to fetch the sale first to pass required fields (like
-        // CustomerID for reversal)
-        // However, the SP handles reversal by looking up the ID.
-        // But we need to pass a SaleModel to handleSaleCRUD.
-        // We can create a dummy model with just the ID, but the SP might expect other
-        // fields not to be null if we were strict.
-        // In our SP, for DELETE, we only use SaleID to look up the record for reversal.
-        // But we pass CustomerID etc. as parameters.
-        // Let's fetch the sale first to be safe and pass valid data.
-        SaleModel sale = getSaleForEdit(saleId);
-        if (sale == null) {
-            JOptionPane.showMessageDialog(null, "Sale not found for deletion.", "Error", JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
-        return handleSaleCRUD(sale, "Delete");
-    }
-
-    /**
-     * Checks the current stock level for a product.
-     */
-    public double getAvailableStock(int productId) {
-        String sql = "SELECT SUM(QtyIn) - SUM(QtyOut) AS CurrentStock FROM TBLStockLedger WHERE ProductID = ?";
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setInt(1, productId);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getDouble("CurrentStock");
-                }
-            }
-        } catch (SQLException e) {
-            System.err.println("Error fetching available stock: " + e.getMessage());
-        }
-        return 0.0;
-    }
-
-    /**
-     * Fetches a paginated list of sales history.
-     */
     public List<SaleModel> getSales(int offset, int limit) {
-        String sql = "SELECT s.*, c.CustomerName " +
-                "FROM TBLSale s " +
-                "JOIN TBLCustomers c ON s.CustomerID = c.CustomerID " +
-                "ORDER BY s.SaleDate DESC LIMIT ? OFFSET ?";
-
         List<SaleModel> sales = new ArrayList<>();
+        String sql = "{CALL SP_Get(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-                PreparedStatement ps = conn.prepareStatement(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
-            ps.setInt(1, limit);
-            ps.setInt(2, offset);
+            cs.setInt(1, offset); // p_Id (Used as Offset for SaleList)
+            cs.setInt(2, limit); // p_OtherId (Used as Limit for SaleList)
+            cs.setNull(3, Types.VARCHAR); // p_Search
+            cs.setNull(4, Types.VARCHAR); // p_OtherData
+            cs.setString(5, "SaleList"); // p_SearchType
+            cs.setInt(6, Constants.getCurrentUserId()); // p_UserID
+            cs.setNull(7, Types.TIMESTAMP); // p_DateTime
 
-            try (ResultSet rs = ps.executeQuery()) {
+            try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
-                    double total = rs.getDouble("TotalAmount");
-                    double received = rs.getDouble("ReceivedAmount");
-
                     sales.add(SaleModel.builder()
                             .saleID(rs.getInt("SaleID"))
-                            .customerID(rs.getInt("CustomerID"))
+                            .invoiceNo(rs.getString("InvoiceNo"))
                             .customerName(rs.getString("CustomerName"))
                             .saleDate(rs.getTimestamp("SaleDate").toLocalDateTime())
-                            .invoiceNo(rs.getString("InvoiceNo"))
-                            .totalAmount(total)
-                            .receivedAmount(received)
-                            .remarks(rs.getString("Remarks"))
+                            .totalAmount(rs.getDouble("TotalAmount"))
+                            .receivedAmount(rs.getDouble("ReceivedAmount"))
                             .build());
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Database error fetching sales: " + e.getMessage());
+            e.printStackTrace();
         }
         return sales;
     }
@@ -267,75 +222,77 @@ public class SaleDao {
         return 0;
     }
 
-    /**
-     * Fetches sale header and all associated details for editing.
-     */
-    public SaleModel getSaleForEdit(int saleId) {
+    public SaleModel getSaleById(int saleId) {
         SaleModel sale = null;
-        try (Connection conn = MySQLConnection.getInstance().getConnection()) {
+        String sql = "{CALL SP_Get(?, ?, ?, ?, ?, ?, ?)}";
 
-            // 1. Fetch Header Data
-            String sqlHeader = "SELECT s.*, c.CustomerName " +
-                    "FROM TBLSale s " +
-                    "JOIN TBLCustomers c ON s.CustomerID = c.CustomerID " +
-                    "WHERE s.SaleID = ?";
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+                CallableStatement cs = conn.prepareCall(sql)) {
 
-            try (PreparedStatement psHeader = conn.prepareStatement(sqlHeader)) {
-                psHeader.setInt(1, saleId);
-                try (ResultSet rs = psHeader.executeQuery()) {
-                    if (rs.next()) {
-                        sale = SaleModel.builder()
-                                .saleID(rs.getInt("SaleID"))
-                                .customerID(rs.getInt("CustomerID"))
-                                .customerName(rs.getString("CustomerName"))
-                                .saleDate(rs.getTimestamp("SaleDate").toLocalDateTime())
-                                .invoiceNo(rs.getString("InvoiceNo"))
-                                .totalAmount(rs.getDouble("TotalAmount"))
-                                .receivedAmount(rs.getDouble("ReceivedAmount"))
-                                .actualAmount(rs.getDouble("ActualAmount"))
-                                .gstPer(rs.getDouble("GSTPercentage"))
-                                .gstAmount(rs.getDouble("GSTAmount"))
-                                .discountType(rs.getString("DiscountType"))
-                                .discountValue(rs.getDouble("Discount"))
-                                .remarks(rs.getString("Remarks"))
-                                .details(new ArrayList<>())
-                                .build();
-                    } else {
-                        return null;
-                    }
+            cs.setInt(1, saleId);
+            cs.setNull(2, Types.INTEGER);
+            cs.setNull(3, Types.VARCHAR);
+            cs.setNull(4, Types.VARCHAR);
+            cs.setString(5, "Sale");
+            cs.setInt(6, Constants.getCurrentUserId());
+            cs.setNull(7, Types.TIMESTAMP);
+
+            try (ResultSet rs = cs.executeQuery()) {
+                if (rs.next()) {
+                    sale = SaleModel.builder()
+                            .saleID(rs.getInt("SaleID"))
+                            .customerID(rs.getInt("CustomerID"))
+                            .customerName(rs.getString("CustomerName"))
+                            .saleDate(rs.getTimestamp("SaleDate").toLocalDateTime())
+                            .actualAmount(rs.getDouble("ActualAmount"))
+                            .gstPer(rs.getDouble("GSTPercentage"))
+                            .gstAmount(rs.getDouble("GSTAmount"))
+                            .discountType(rs.getString("DiscountType"))
+                            .discountValue(rs.getDouble("Discount"))
+                            .totalAmount(rs.getDouble("TotalAmount"))
+                            .receivedAmount(rs.getDouble("ReceivedAmount"))
+                            .remarks(rs.getString("Remarks"))
+                            .build();
                 }
             }
-
-            // 2. Fetch Detail Data (Line Items)
-            String sqlDetails = "SELECT sd.*, p.ProductName, pt.quarterQty as UnitPerCarton " +
-                    "FROM TBLSaleDetail sd " +
-                    "JOIN TBLProducts p ON sd.ProductID = p.ProductID " +
-                    "JOIN TBLPeckingType pt ON p.PeckingTypeId = pt.PeekingTypeId " +
-                    "WHERE sd.SaleID = ?";
-
-            try (PreparedStatement psDetails = conn.prepareStatement(sqlDetails)) {
-                psDetails.setInt(1, saleId);
-                try (ResultSet rs = psDetails.executeQuery()) {
-                    while (rs.next()) {
-                        SaleDetailModel detail = SaleDetailModel.builder()
-                                .saleDetailID(rs.getInt("SaleDetailID"))
-                                .productID(rs.getInt("ProductID"))
-                                .productName(rs.getString("ProductName"))
-                                .unitsPerCarton(rs.getInt("UnitPerCarton"))
-                                .quantity(rs.getDouble("Quantity"))
-                                .rate(rs.getDouble("Rate"))
-                                .productDiscount(rs.getDouble("ProductDiscount"))
-                                .total(rs.getDouble("Total"))
-                                .build();
-                        sale.getDetails().add(detail);
-                    }
-                }
-            }
-
         } catch (SQLException e) {
-            System.err.println("Database error fetching sale for edit: " + e.getMessage());
-            return null;
+            e.printStackTrace();
         }
         return sale;
+    }
+
+    public List<SaleDetailModel> getSaleDetails(int saleId) {
+        List<SaleDetailModel> details = new ArrayList<>();
+        String sql = "{CALL SP_Get(?, ?, ?, ?, ?, ?, ?)}";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+                CallableStatement cs = conn.prepareCall(sql)) {
+
+            cs.setInt(1, saleId);
+            cs.setNull(2, Types.INTEGER);
+            cs.setNull(3, Types.VARCHAR);
+            cs.setNull(4, Types.VARCHAR);
+            cs.setString(5, "SaleLine");
+            cs.setInt(6, Constants.getCurrentUserId());
+            cs.setNull(7, Types.TIMESTAMP);
+
+            try (ResultSet rs = cs.executeQuery()) {
+                while (rs.next()) {
+                    details.add(SaleDetailModel.builder()
+                            .saleDetailID(rs.getInt("SaleDetailID"))
+                            .saleID(rs.getInt("SaleID"))
+                            .productID(rs.getInt("ProductID"))
+                            .productName(rs.getString("ProductName"))
+                            .quantity(rs.getDouble("Quantity"))
+                            .rate(rs.getDouble("Rate"))
+                            .productDiscount(rs.getDouble("ProductDiscount"))
+                            .total(rs.getDouble("Total"))
+                            .build());
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return details;
     }
 }

@@ -2,7 +2,6 @@ package raven.modal.demo.forms;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.CustomerDao;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.SaleDao;
@@ -15,6 +14,7 @@ import raven.modal.demo.tables.ActionItem;
 import raven.modal.demo.tables.TableActionCellEditor;
 import raven.modal.demo.tables.TableActionCellRenderer;
 import raven.modal.demo.tables.TableActions;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.ComboBoxUtils;
 import raven.modal.demo.utils.combox.InvoiceUtil;
@@ -57,7 +57,7 @@ public class FormSale extends Form implements TableActions {
     private int saleId = 0;
     private final ProductDao productDao = new ProductDao();
     private final CustomerDao customerDao = new CustomerDao();
-    private final SaleDao saleDao = new SaleDao(); // Need to create this DAO
+    private final SaleDao saleDao = new SaleDao();
 
     private ProductModel selectedProduct;
     private List<ProductModel> allProductsCache;
@@ -67,7 +67,7 @@ public class FormSale extends Form implements TableActions {
         init();
         loadInitialData();
         if (this.saleId > 0) {
-            // loadSaleData(this.saleId); // TODO: Implement Edit Load
+            loadSaleData(this.saleId);
         }
     }
 
@@ -556,11 +556,62 @@ public class FormSale extends Form implements TableActions {
 
         if (saleId > 0) {
             saleDao.updateSale(saleModel);
+            JOptionPane.showMessageDialog(this, "Sale Updated successfully!.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            SwingUtilities.getWindowAncestor(this).dispose();
         } else {
             saleDao.saveSale(saleModel);
             clearForm();
         }
 
+    }
+
+    private void loadSaleData(int id) {
+        SaleModel sale = saleDao.getSaleById(id);
+
+        if (sale == null) {
+            JOptionPane.showMessageDialog(this, "Sale ID " + id + " not found.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Set Customer (must match the model structure in cmbCustomer)
+        CustomerModel selectedCustomer = new CustomerModel(sale.getCustomerID(), sale.getCustomerName());
+        cmbCustomer.setSelectedItem(selectedCustomer);
+
+        // Set Summary Fields
+        JComponentUtils.resetTextField(txtActualAmount, String.format("%.2f", sale.getActualAmount()));
+        cmbDiscountType.setSelectedItem(sale.getDiscountType());
+        JComponentUtils.resetTextField(txtDiscountValue, String.format("%.2f", sale.getDiscountValue()));
+        JComponentUtils.resetTextField(txtTotalAmount, String.format("%.2f", sale.getTotalAmount()));
+        JComponentUtils.resetTextField(txtReceivingAmount, String.format("%.2f", sale.getReceivedAmount()));
+        txtComment.setText(sale.getRemarks());
+        txtGSTAmount.setText(String.format("%.2f", sale.getGstAmount()));
+
+        // --- Load Detail Data (Table Rows) ---
+        List<SaleDetailModel> details = saleDao.getSaleDetails(id);
+        detailModel.setRowCount(0); // Clear table before loading
+
+        for (SaleDetailModel detail : details) {
+            double totalQuantity = detail.getQuantity();
+
+            detailModel.addRow(new Object[] {
+                    detailModel.getRowCount() + 1, // Sr#
+                    detail.getProductName(),
+                    totalQuantity, // Display Total Qty
+                    detail.getRate(),
+                    String.format("%.2f", detail.getProductDiscount()),
+                    String.format("%.2f", detail.getTotal()),
+                    "Action Placeholder",
+                    detail.getProductID(), // Hidden ID
+                    0 // Hidden PeckingTypeID (not critical for display)
+            });
+        }
+
+        // Recalculate totals after loading the table
+        updateActualAmount();
+
+        // Inform the user they are in edit mode
+        JLabel title = (JLabel) getComponent(0);
+        title.setText("Edit Sale #" + id + " (Customer: " + sale.getCustomerName() + ")");
     }
 
     private void setupInputListeners() {
@@ -598,15 +649,62 @@ public class FormSale extends Form implements TableActions {
 
     @Override
     public ActionItem[] tableActions() {
-        // The actions are the same as Purchase: Edit and Delete line items
         return new ActionItem[] {
-                // new ActionItem("Edit", (table1, row) -> {
-                // // TODO: Implement Edit line item logic (similar to FormPurchase)
-                // // 1. Get ProductID, Qty, Price, Discount
-                // // 2. Calculate Cartons/Units
-                // // 3. Populate top input fields (cmbProductSearch, txtCartons, etc.)
-                // // 4. Delete the original row
-                // }),
+//                new ActionItem("Edit", (table1, row) -> {
+//                    // 1. Get Data from Table
+//                    int productId = (int) detailModel.getValueAt(row, 7);
+//                    double totalQuantity = Double.parseDouble(detailModel.getValueAt(row, 2).toString());
+//                    double unitPrice = Double.parseDouble(detailModel.getValueAt(row, 3).toString());
+//                    double discount = Double.parseDouble(detailModel.getValueAt(row, 4).toString());
+//                    String productName = detailModel.getValueAt(row, 1).toString();
+//
+//                    // 2. Find Product in Cache to get UnitsPerCarton
+//                    ProductModel productToEdit = allProductsCache.stream()
+//                            .filter(p -> p.getProductId() == productId)
+//                            .findFirst()
+//                            .orElse(null);
+//
+//                    if (productToEdit == null) {
+//                        // Try fetching from DAO if not in cache (fallback)
+//                        productToEdit = productDao.getProductById(productId);
+//                    }
+//
+//                    if (productToEdit == null) {
+//                        JOptionPane.showMessageDialog(this, "Error: Could not retrieve product details for editing.",
+//                                "Error", JOptionPane.ERROR_MESSAGE);
+//                        return;
+//                    }
+//
+//                    // 3. Calculate Cartons and Units
+//                    int unitsPerCarton = productToEdit.getUnitsPerCarton();
+//                    double cartons = 0;
+//                    double units = totalQuantity;
+//
+//                    if (unitsPerCarton > 0) {
+//                        cartons = Math.floor(totalQuantity / unitsPerCarton);
+//                        units = totalQuantity % unitsPerCarton;
+//                    }
+//
+//                    // 4. Populate Input Fields
+//                    DefaultComboBoxModel<ProductModel> productModel = new DefaultComboBoxModel<>(
+//                            new ProductModel[] { productToEdit });
+//                    cmbProductSearch.setModel(productModel);
+//                    cmbProductSearch.setSelectedItem(productToEdit);
+//                    selectedProduct = productToEdit;
+//
+//                    JComponentUtils.resetTextField(txtCartons, String.valueOf((int) cartons));
+//                    JComponentUtils.resetTextField(txtUnits, String.format("%.2f", units));
+//                    JComponentUtils.resetTextField(txtUnitPrice, String.format("%.2f", unitPrice));
+//                    JComponentUtils.resetTextField(txtProductDiscount, String.format("%.2f", discount));
+//
+//                    // 5. Remove the row
+//                    onDelete(row);
+//
+//                    JOptionPane.showMessageDialog(this,
+//                            "Line item '" + productName + "' loaded for editing. Adjust values and click 'Add'.",
+//                            "Edit Mode",
+//                            JOptionPane.INFORMATION_MESSAGE);
+//                }),
                 new ActionItem("Delete", (table1, row) -> {
                     if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this line item?",
                             "Confirm Deletion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {

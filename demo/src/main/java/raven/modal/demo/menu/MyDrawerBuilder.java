@@ -33,6 +33,7 @@ import raven.modal.demo.tables.CustomerTablePanel;
 import raven.modal.demo.tables.PackingTypeTablePanel;
 import raven.modal.demo.tables.ProductTablePanel;
 import raven.modal.demo.tables.PurchaseTablePanel;
+import raven.modal.demo.tables.SaleTablePanel;
 import raven.modal.demo.tables.SupplierTablePanel;
 import raven.modal.drawer.DrawerPanel;
 import raven.modal.drawer.item.Item;
@@ -204,7 +205,8 @@ public class MyDrawerBuilder extends SimpleDrawerBuilder {
                         .subMenu("Purchase History", PurchaseTablePanel.class)
                         .subMenu("Purchase Payment", FormSupplierPayment.class),
                 new Item("Sale", "sale-1.svg")
-                        .subMenu("Add Sale", FormSale.class),
+                        .subMenu("Add Sale", FormSale.class)
+                        .subMenu("Sale History", SaleTablePanel.class),
                 new Item("Suppliers", "supplier-1.svg")
                         .subMenu("Add Supplier", FormSupplier.class)
                         .subMenu("View All Suppliers", SupplierTablePanel.class),
