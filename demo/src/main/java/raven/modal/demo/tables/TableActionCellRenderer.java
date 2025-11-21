@@ -17,7 +17,16 @@ public class TableActionCellRenderer extends JPanel implements TableCellRenderer
         // --- Dynamically Create Buttons ---
         for (ActionItem action : actions) {
             JButton button = new JButton(action.getText(), action.getIcon());
-            button.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_ROUND_RECT);
+            if (action.getIcon() == null) {
+                button.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_ROUND_RECT);
+            } else {
+                button.setBorder(BorderFactory.createEmptyBorder());
+                button.setContentAreaFilled(false);
+                button.setFocusPainted(false);
+                button.setBorderPainted(false);
+                button.setOpaque(false);
+            }
+
             button.setFocusable(false);
             button.setOpaque(false); // Button stays flat
             add(button);
@@ -26,8 +35,8 @@ public class TableActionCellRenderer extends JPanel implements TableCellRenderer
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus,
-                                                   int row, int column) {
+            boolean isSelected, boolean hasFocus,
+            int row, int column) {
 
         if (isSelected) {
             setBackground(table.getSelectionBackground());

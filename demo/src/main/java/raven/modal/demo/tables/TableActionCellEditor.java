@@ -1,5 +1,7 @@
 package raven.modal.demo.tables;
 
+import com.formdev.flatlaf.FlatClientProperties;
+
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import java.awt.*;
@@ -19,7 +21,15 @@ public class TableActionCellEditor extends AbstractCellEditor implements TableCe
         // --- Dynamically Create and Configure Buttons ---
         for (ActionItem actionItem : actions) {
             JButton button = new JButton(actionItem.getText(), actionItem.getIcon());
-            button.putClientProperty("JButton.buttonType", "roundRect");
+            if (actionItem.getIcon() == null) {
+                button.putClientProperty(FlatClientProperties.BUTTON_TYPE, FlatClientProperties.BUTTON_TYPE_ROUND_RECT);
+            } else {
+                button.setBorder(BorderFactory.createEmptyBorder());
+                button.setContentAreaFilled(false);
+                button.setFocusPainted(false);
+                button.setBorderPainted(false);
+                button.setOpaque(false);
+            }
 
             // Add the action listener
             button.addActionListener(e -> {
@@ -41,7 +51,7 @@ public class TableActionCellEditor extends AbstractCellEditor implements TableCe
 
     @Override
     public Component getTableCellEditorComponent(JTable table, Object value,
-                                                 boolean isSelected, int row, int column) {
+            boolean isSelected, int row, int column) {
         this.selectedRow = row; // Store the current row index
         return panel;
     }

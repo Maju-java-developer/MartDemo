@@ -2,7 +2,6 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.forms.FormViewPurchase;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.UtilsDao;
@@ -16,12 +15,10 @@ import raven.swingpack.JPagination;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-
-@SystemForm(name = "Products", description = "View and manage product records", tags = {"product", "table"})
+@SystemForm(name = "Products", description = "View and manage product records", tags = { "product", "table" })
 public class ProductTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -79,7 +76,7 @@ public class ProductTablePanel extends Form implements TableActions {
         // Column Width Settings
         table.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
         table.getColumnModel().getColumn(2).setPreferredWidth(120); // Code
-        table.getColumnModel().getColumn(3).setPreferredWidth(80);  // Unit
+        table.getColumnModel().getColumn(3).setPreferredWidth(80); // Unit
         table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(150); // Action
 
         JScrollPane scroll = new JScrollPane(table);
@@ -122,7 +119,7 @@ public class ProductTablePanel extends Form implements TableActions {
         int totalProducts = UtilsDao.getCount("tblproducts");
 
         for (ProductModel productModel : products) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     productModel.getProductId(),
                     productModel.getProductName(),
                     productModel.getProductCode(),
@@ -148,7 +145,7 @@ public class ProductTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         // Define the dynamic actions for the Product table: Edit and Delete
-        return new ActionItem[]{
+        return new ActionItem[] {
                 new ActionItem("Edit", (table1, row) -> {
                     // Assuming column 0 holds the Product ID
                     int productId = (int) table1.getValueAt(row, 0);
@@ -168,12 +165,12 @@ public class ProductTablePanel extends Form implements TableActions {
                 })
         };
     }
+
     private void openProductFormModal(int typeId) {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormProducts(typeId),
-                typeId > 0 ? "Edit Product Type" : "Create New Product Type"
-        );
+                typeId > 0 ? "Edit Product Type" : "Create New Product Type");
         formRefresh();
     }
 
@@ -185,9 +182,11 @@ public class ProductTablePanel extends Form implements TableActions {
         int returnCode = productDao.handleProductCRUD(productModel, "Delete");
 
         if (returnCode == -2) { // Delete Success
-            JOptionPane.showMessageDialog(null, "Product ID " + productId + " deleted successfully!", "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Product ID " + productId + " deleted successfully!",
+                    "Deletion Success", JOptionPane.INFORMATION_MESSAGE);
         } else if (returnCode == -4) { // Not Found
-            JOptionPane.showMessageDialog(null, "Product ID " + productId + " not found. No record was deleted.", "Warning", JOptionPane.WARNING_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Product ID " + productId + " not found. No record was deleted.",
+                    "Warning", JOptionPane.WARNING_MESSAGE);
         } else if (returnCode == 0) {
             // Error already displayed by DAO (e.g., Integrity Constraint)
         }

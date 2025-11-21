@@ -15,11 +15,10 @@ import raven.swingpack.JPagination;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Categories", description = "Manage product categories", tags = {"category", "table"})
+@SystemForm(name = "Categories", description = "Manage product categories", tags = { "category", "table" })
 public class CategoryTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -47,7 +46,8 @@ public class CategoryTablePanel extends Form implements TableActions {
         controlPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
         btnCreate = new JButton("Create Category");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openCategoryFormModal(0)); // Open modal in ADD mode
 
         controlPanel.add(new JPanel(), "growx");
@@ -85,8 +85,10 @@ public class CategoryTablePanel extends Form implements TableActions {
         JScrollPane scroll = new JScrollPane(table);
         // Standard styling properties...
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE, "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
-        table.putClientProperty(FlatClientProperties.STYLE, "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
+        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
+        table.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
 
         add(scroll);
 
@@ -106,8 +108,7 @@ public class CategoryTablePanel extends Form implements TableActions {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormCategory(categoryId),
-                categoryId > 0 ? "Edit Category" : "Create New Category"
-        );
+                categoryId > 0 ? "Edit Category" : "Create New Category");
         formRefresh();
     }
 
@@ -120,7 +121,7 @@ public class CategoryTablePanel extends Form implements TableActions {
         int totalCategories = categoryDao.getCategoryCount();
 
         for (CategoryModel categoryModel : categories) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     categoryModel.getCategoryId(),
                     categoryModel.getCategoryName(),
                     categoryModel.isActive() ? "Active" : "Inactive"
@@ -145,7 +146,7 @@ public class CategoryTablePanel extends Form implements TableActions {
 
     @Override
     public ActionItem[] tableActions() {
-        return new ActionItem[]{
+        return new ActionItem[] {
                 new ActionItem("Edit", (table1, row) -> {
                     int categoryId = (int) table1.getValueAt(row, 0);
                     openCategoryFormModal(categoryId); // Open modal in EDIT mode

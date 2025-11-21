@@ -19,9 +19,8 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-
-@SystemForm(name = "Vendors", description = "Manage vendor records", tags = {"vendor", "table"})
-public class SupplierTablePanel extends Form implements TableActions{
+@SystemForm(name = "Vendors", description = "Manage vendor records", tags = { "vendor", "table" })
+public class SupplierTablePanel extends Form implements TableActions {
 
     private JTable table;
     private DefaultTableModel model;
@@ -50,7 +49,8 @@ public class SupplierTablePanel extends Form implements TableActions{
         // --- Control Panel (Includes Create Button) ---
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][right]", ""));
         btnCreate = new JButton("Create Vendor");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openSupplierFormModal(0)); // Open modal in ADD mode
 
         controlPanel.add(new JPanel(), "growx");
@@ -81,19 +81,22 @@ public class SupplierTablePanel extends Form implements TableActions{
         });
 
         // Set renderer & editor for Action column
-        int getLastOneColumn = (table.getColumnCount() -1);
+        int getLastOneColumn = (table.getColumnCount() - 1);
         table.getColumnModel().getColumn(0).setMaxWidth(30);
         table.getColumnModel().getColumn(getLastOneColumn).setCellRenderer(new TableActionCellRenderer(tableActions()));
-        table.getColumnModel().getColumn(getLastOneColumn).setCellEditor(new TableActionCellEditor(table, tableActions()));
+        table.getColumnModel().getColumn(getLastOneColumn)
+                .setCellEditor(new TableActionCellEditor(table, tableActions()));
 
         // Optional: set fixed width for Action column
-        table.getColumnModel().getColumn(getLastOneColumn).setPreferredWidth(200);
+        table.getColumnModel().getColumn(getLastOneColumn).setPreferredWidth(50);
 
         JScrollPane scroll = new JScrollPane(table);
         // ... (Table styling remains the same) ...
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE, "height:30;hoverBackground:null;pressedBackground:null;separatorColor:$TableHeader.background;");
-        table.putClientProperty(FlatClientProperties.STYLE, "rowHeight:30;showHorizontalLines:true;intercellSpacing:0,1;cellFocusColor:$TableHeader.hoverBackground;selectionBackground:$TableHeader.hoverBackground;selectionForeground:$Table.foreground;");
+        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:30;hoverBackground:null;pressedBackground:null;separatorColor:$TableHeader.background;");
+        table.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:30;showHorizontalLines:true;intercellSpacing:0,1;cellFocusColor:$TableHeader.hoverBackground;selectionBackground:$TableHeader.hoverBackground;selectionForeground:$Table.foreground;");
 
         add(scroll, "grow, push"); // Table takes remaining space
 
@@ -114,8 +117,7 @@ public class SupplierTablePanel extends Form implements TableActions{
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormSupplier(id),
-                id > 0 ? "Edit Vendor" : "Create New Vendor"
-        );
+                id > 0 ? "Edit Vendor" : "Create New Vendor");
         formRefresh();
     }
 
@@ -131,7 +133,7 @@ public class SupplierTablePanel extends Form implements TableActions{
         // The logic for count++ or offset+1 is usually redundant if you display the ID
         // The table should display the SupplierID (index 0)
         for (SupplierModel supplierModel : suppliers) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     supplierModel.getSupplierID(),
                     supplierModel.getSupplierName(),
                     supplierModel.getContactNo(),
@@ -155,32 +157,34 @@ public class SupplierTablePanel extends Form implements TableActions{
 
     @Override
     public ActionItem[] tableActions() {
-        return new ActionItem[]{
-//                new ActionItem("Payment", (table1, row) -> {
-//                    String supplier = table1.getValueAt(row, 1).toString();
-//                    JOptionPane.showMessageDialog(table1, "Add Payment for " + supplier);
-//                }),
-                new ActionItem("Edit", (table1, row) -> {
-                    int supplierId = (int) table1.getValueAt(row, 0); // Get ID from first column
-                    openSupplierFormModal(supplierId);
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int supplierId = (int) table1.getValueAt(row, 0);
-                    String supplierName = table1.getValueAt(row, 1).toString();
+        return new ActionItem[] {
+                // new ActionItem("Payment", (table1, row) -> {
+                // String supplier = table1.getValueAt(row, 1).toString();
+                // JOptionPane.showMessageDialog(table1, "Add Payment for " + supplier);
+                // }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int supplierId = (int) table1.getValueAt(row, 0); // Get ID from first column
+                            openSupplierFormModal(supplierId);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int supplierId = (int) table1.getValueAt(row, 0);
+                            String supplierName = table1.getValueAt(row, 1).toString();
 
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete vendor: " + supplierName + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete vendor: " + supplierName + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        if (supplierDao.deleteSupplier(supplierId) == -2) { // Call DAO delete
-                            JOptionPane.showMessageDialog(table1, "Vendor deleted successfully!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                            formRefresh();
-                        }
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                if (supplierDao.deleteSupplier(supplierId) == -2) { // Call DAO delete
+                                    JOptionPane.showMessageDialog(table1, "Vendor deleted successfully!", "Success",
+                                            JOptionPane.INFORMATION_MESSAGE);
+                                    formRefresh();
+                                }
+                            }
+                        })
         };
     }
-
 
 }
