@@ -85,7 +85,7 @@ public class SaleTablePanel extends Form implements TableActions {
         saleTable.getColumnModel().getColumn(4).setPreferredWidth(80); // Total
         saleTable.getColumnModel().getColumn(5).setPreferredWidth(80); // Received
         saleTable.getColumnModel().getColumn(6).setPreferredWidth(80); // Balance
-        saleTable.getColumnModel().getColumn(actionCol).setPreferredWidth(200);
+        saleTable.getColumnModel().getColumn(actionCol).setPreferredWidth(50);
 
         saleTable.getTableHeader().putClientProperty(FlatClientProperties.STYLE, ""
                 + "height:30;"
@@ -173,8 +173,7 @@ public class SaleTablePanel extends Form implements TableActions {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormSale(saleId),
-                "Edit Sale #" + saleId
-        );
+                "Edit Sale #" + saleId);
         formRefresh();
     }
 
@@ -191,12 +190,14 @@ public class SaleTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
-                new ActionItem("Edit", (table1, row) -> {
-                    onEdit(row);
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    onDelete(row);
-                }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            onEdit(row);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            onDelete(row);
+                        }),
         };
     }
 }

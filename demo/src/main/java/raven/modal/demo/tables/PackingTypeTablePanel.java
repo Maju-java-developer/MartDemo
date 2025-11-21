@@ -18,7 +18,8 @@ import javax.swing.table.DefaultTableModel;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Packing Types", description = "Manage system Packing type definitions", tags = {"Packing", "table"})
+@SystemForm(name = "Packing Types", description = "Manage system Packing type definitions", tags = { "Packing",
+        "table" })
 public class PackingTypeTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -45,7 +46,8 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
 
         btnCreate = new JButton("Create Packing Type");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openPackingTypeFormModal(0));
 
         controlPanel.add(new JPanel(), "growx");
@@ -65,7 +67,8 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         table.getTableHeader().setDefaultRenderer(new TableHeaderAlignment(table) {
             @Override
             protected int getAlignment(int column) {
-                if (column == 1 || column == 4) return SwingConstants.CENTER;
+                if (column == 1 || column == 4)
+                    return SwingConstants.CENTER;
                 return SwingConstants.LEADING;
             }
         });
@@ -85,8 +88,10 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         JScrollPane scroll = new JScrollPane(table);
         // Standard styling properties...
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE, "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
-        table.putClientProperty(FlatClientProperties.STYLE, "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
+        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
+        table.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
 
         add(scroll);
 
@@ -106,8 +111,7 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormPackingType(typeId),
-                typeId > 0 ? "Edit Packing Type" : "Create New Packing Type"
-        );
+                typeId > 0 ? "Edit Packing Type" : "Create New Packing Type");
         formRefresh();
     }
 
@@ -120,7 +124,7 @@ public class PackingTypeTablePanel extends Form implements TableActions {
         int totalTypes = PackingTypeDao.getPackingTypeCount();
 
         for (PackingTypeModel typeModel : types) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     typeModel.getPackingTypeId(),
                     typeModel.getPackingTypeName(),
                     typeModel.getCartonQty(),
@@ -146,24 +150,26 @@ public class PackingTypeTablePanel extends Form implements TableActions {
 
     @Override
     public ActionItem[] tableActions() {
-        return new ActionItem[]{
-                new ActionItem("Edit", (table1, row) -> {
-                    int typeId = (int) table1.getValueAt(row, 0);
-                    openPackingTypeFormModal(typeId);
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int typeId = (int) table1.getValueAt(row, 0);
-                    String typeName = table1.getValueAt(row, 1).toString();
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete Packing Type: " + typeName + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        return new ActionItem[] {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int typeId = (int) table1.getValueAt(row, 0);
+                            openPackingTypeFormModal(typeId);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int typeId = (int) table1.getValueAt(row, 0);
+                            String typeName = table1.getValueAt(row, 1).toString();
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete Packing Type: " + typeName + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int result = PackingTypeDao.deletePackingType(typeId);
-                        MessageUtils.showPackingTypeMessage(result);
-                        formRefresh();
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                int result = PackingTypeDao.deletePackingType(typeId);
+                                MessageUtils.showPackingTypeMessage(result);
+                                formRefresh();
+                            }
+                        })
         };
     }
 }

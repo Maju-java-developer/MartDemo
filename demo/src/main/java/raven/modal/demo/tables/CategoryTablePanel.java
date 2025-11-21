@@ -80,7 +80,7 @@ public class CategoryTablePanel extends Form implements TableActions {
         // Column Width Settings
         table.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
         table.getColumnModel().getColumn(2).setPreferredWidth(100); // Status
-        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(150); // Action
+        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(50); // Action
 
         JScrollPane scroll = new JScrollPane(table);
         // Standard styling properties...
@@ -147,23 +147,25 @@ public class CategoryTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
-                new ActionItem("Edit", (table1, row) -> {
-                    int categoryId = (int) table1.getValueAt(row, 0);
-                    openCategoryFormModal(categoryId); // Open modal in EDIT mode
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int categoryId = (int) table1.getValueAt(row, 0);
-                    String categoryName = table1.getValueAt(row, 1).toString();
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete category: " + categoryName + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int categoryId = (int) table1.getValueAt(row, 0);
+                            openCategoryFormModal(categoryId); // Open modal in EDIT mode
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int categoryId = (int) table1.getValueAt(row, 0);
+                            String categoryName = table1.getValueAt(row, 1).toString();
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete category: " + categoryName + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int result = categoryDao.deleteCategory(categoryId);
-                        MessageUtils.showCategoryMessage(result);
-                        formRefresh(); // Refresh table after deletion
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                int result = categoryDao.deleteCategory(categoryId);
+                                MessageUtils.showCategoryMessage(result);
+                                formRefresh(); // Refresh table after deletion
+                            }
+                        })
         };
     }
 }

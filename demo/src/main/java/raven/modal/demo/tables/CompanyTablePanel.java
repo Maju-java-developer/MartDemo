@@ -19,7 +19,7 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Companies", description = "Manage company records", tags = {"company", "table"})
+@SystemForm(name = "Companies", description = "Manage company records", tags = { "company", "table" })
 public class CompanyTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -48,7 +48,8 @@ public class CompanyTablePanel extends Form implements TableActions {
         controlPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
         btnCreate = new JButton("Create Company");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openCompanyFormModal(0)); // Open modal in ADD mode
 
         controlPanel.add(new JPanel(), "growx"); // Spacer to push button right
@@ -86,15 +87,16 @@ public class CompanyTablePanel extends Form implements TableActions {
         // Column Width Settings
         table.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
         table.getColumnModel().getColumn(2).setPreferredWidth(100); // Status
-        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(150); // Action
+        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(50); // Action
 
         // Standard table styling
         JScrollPane scroll = new JScrollPane(table);
         // ... (table styling properties remain the same) ...
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE, "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
-        table.putClientProperty(FlatClientProperties.STYLE, "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
-
+        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
+        table.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
 
         add(scroll);
 
@@ -138,7 +140,7 @@ public class CompanyTablePanel extends Form implements TableActions {
         int totalCompanies = UtilsDao.getCount("TBLCompanies");
 
         for (CompanyModel companyModel : companies) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     companyModel.getCompanyId(),
                     companyModel.getCompanyName(),
                     companyModel.isActive() ? "Active" : "Inactive"
@@ -164,24 +166,26 @@ public class CompanyTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         // Define the dynamic actions for the Company table: Edit and Delete
-        return new ActionItem[]{
-                new ActionItem("Edit", (table1, row) -> {
-                    int companyId = (int) table1.getValueAt(row, 0);
-                    openCompanyFormModal(companyId); // Open modal in EDIT mode
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int companyId = (int) table1.getValueAt(row, 0);
-                    String companyName = table1.getValueAt(row, 1).toString();
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete company: " + companyName + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        return new ActionItem[] {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int companyId = (int) table1.getValueAt(row, 0);
+                            openCompanyFormModal(companyId); // Open modal in EDIT mode
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int companyId = (int) table1.getValueAt(row, 0);
+                            String companyName = table1.getValueAt(row, 1).toString();
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete company: " + companyName + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int result = companyDao.deleteCompany(companyId);
-                        MessageUtils.showCompanyMessageResult(result);
-                        formRefresh(); // Refresh table after deletion
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                int result = companyDao.deleteCompany(companyId);
+                                MessageUtils.showCompanyMessageResult(result);
+                                formRefresh(); // Refresh table after deletion
+                            }
+                        })
         };
     }
 }

@@ -1,6 +1,7 @@
 package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
+import com.formdev.flatlaf.extras.FlatSVGIcon;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.ProductDao;
@@ -77,7 +78,7 @@ public class ProductTablePanel extends Form implements TableActions {
         table.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
         table.getColumnModel().getColumn(2).setPreferredWidth(120); // Code
         table.getColumnModel().getColumn(3).setPreferredWidth(80); // Unit
-        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(150); // Action
+        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(50); // Action
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -146,12 +147,12 @@ public class ProductTablePanel extends Form implements TableActions {
     public ActionItem[] tableActions() {
         // Define the dynamic actions for the Product table: Edit and Delete
         return new ActionItem[] {
-                new ActionItem("Edit", (table1, row) -> {
+                new ActionItem(new FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f), (table1, row) -> {
                     // Assuming column 0 holds the Product ID
                     int productId = (int) table1.getValueAt(row, 0);
                     openProductFormModal(productId);
                 }),
-                new ActionItem("Delete", (table1, row) -> {
+                new ActionItem(new FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f), (table1, row) -> {
                     int productId = (int) table1.getValueAt(row, 0);
                     String productName = table1.getValueAt(row, 1).toString();
                     int confirm = JOptionPane.showConfirmDialog(table1,

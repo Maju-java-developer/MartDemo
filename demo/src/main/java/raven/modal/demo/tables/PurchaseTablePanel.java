@@ -19,7 +19,8 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Purchase History", description = "View and manage all recorded purchases", tags = {"purchase", "history", "table"})
+@SystemForm(name = "Purchase History", description = "View and manage all recorded purchases", tags = { "purchase",
+        "history", "table" })
 public class PurchaseTablePanel extends Form implements TableActions {
 
     private JTable purchaseTable;
@@ -64,8 +65,9 @@ public class PurchaseTablePanel extends Form implements TableActions {
 
     private void setupTable() {
         // Columns for detailed history view
-//        String[] columns = {"ID", "Vendor", "Date", "Actual Amt", "Discount", "Total", "Paid", "Balance", "Actions"};
-        String[] columns = {"#", "Vendor", "Date", "Total Amount", "Paid Amount", "Balance", "Actions"};
+        // String[] columns = {"ID", "Vendor", "Date", "Actual Amt", "Discount",
+        // "Total", "Paid", "Balance", "Actions"};
+        String[] columns = { "#", "Vendor", "Date", "Total Amount", "Paid Amount", "Balance", "Actions" };
 
         tableModel = new DefaultTableModel(Constants.purchaseColumns, 0) {
             @Override
@@ -78,8 +80,10 @@ public class PurchaseTablePanel extends Form implements TableActions {
 
         // Setup the Action column
         int actionCol = (Constants.purchaseColumns.length - 1);
-        purchaseTable.getColumnModel().getColumn(actionCol).setCellRenderer(new TableActionCellRenderer(tableActions()));
-        purchaseTable.getColumnModel().getColumn(actionCol).setCellEditor(new TableActionCellEditor(purchaseTable, tableActions()));
+        purchaseTable.getColumnModel().getColumn(actionCol)
+                .setCellRenderer(new TableActionCellRenderer(tableActions()));
+        purchaseTable.getColumnModel().getColumn(actionCol)
+                .setCellEditor(new TableActionCellEditor(purchaseTable, tableActions()));
 
         // Fix column width
         purchaseTable.getColumnModel().getColumn(0).setMaxWidth(30); // ID
@@ -88,7 +92,7 @@ public class PurchaseTablePanel extends Form implements TableActions {
         purchaseTable.getColumnModel().getColumn(3).setPreferredWidth(75); // Total Amount
         purchaseTable.getColumnModel().getColumn(4).setPreferredWidth(75); // Paid Amount
         purchaseTable.getColumnModel().getColumn(5).setPreferredWidth(75); // Remaining Amount
-        purchaseTable.getColumnModel().getColumn(actionCol).setPreferredWidth(300);
+        purchaseTable.getColumnModel().getColumn(actionCol).setPreferredWidth(50);
 
         purchaseTable.getTableHeader().putClientProperty(FlatClientProperties.STYLE, ""
                 + "height:30;"
@@ -107,7 +111,8 @@ public class PurchaseTablePanel extends Form implements TableActions {
         purchaseTable.getTableHeader().setDefaultRenderer(new TableHeaderAlignment(purchaseTable) {
             @Override
             protected int getAlignment(int column) {
-                if (column == 1 || column  == (Constants.purchaseColumns.length - 1)) return SwingConstants.CENTER;
+                if (column == 1 || column == (Constants.purchaseColumns.length - 1))
+                    return SwingConstants.CENTER;
                 return SwingConstants.LEADING;
             }
         });
@@ -123,14 +128,14 @@ public class PurchaseTablePanel extends Form implements TableActions {
         for (PurchaseModel p : purchases) {
             double balance = p.getTotalAmount() - p.getPaidAmount();
 
-            tableModel.addRow(new Object[]{
+            tableModel.addRow(new Object[] {
                     p.getPurchaseID(),
                     p.getSupplierName(),
                     p.getPurchaseDate().toLocalDate(),
-//                    String.format("%.2f", p.getActualAmount()),
-//                    p.getDiscountType().startsWith("P")
-//                            ? String.format("%.2f%%", p.getDiscountValue())
-//                            : String.format("%.2f", p.getDiscountValue()),
+                    // String.format("%.2f", p.getActualAmount()),
+                    // p.getDiscountType().startsWith("P")
+                    // ? String.format("%.2f%%", p.getDiscountValue())
+                    // : String.format("%.2f", p.getDiscountValue()),
                     String.format("%.2f", p.getTotalAmount()),
                     String.format("%.2f", p.getPaidAmount()),
                     String.format("%.2f", balance),
@@ -160,7 +165,8 @@ public class PurchaseTablePanel extends Form implements TableActions {
                 "Confirm Delete", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
             PurchaseModel purchaseById = purchaseDao.getPurchaseById(purchaseId);
             purchaseDao.handlePurchaseCRUD(purchaseById, "Delete");
-            JOptionPane.showMessageDialog(this, "Purchase deletion logic initiated for ID: " + purchaseId, "Deletion", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Purchase deletion logic initiated for ID: " + purchaseId, "Deletion",
+                    JOptionPane.INFORMATION_MESSAGE);
             formRefresh();
         }
     }
@@ -194,24 +200,28 @@ public class PurchaseTablePanel extends Form implements TableActions {
         panel.add(new JLabel("Payment Amount:"));
         panel.add(txtPayment, "w 150");
 
-        int result = JOptionPane.showConfirmDialog(this, panel, "Record Payment", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+        int result = JOptionPane.showConfirmDialog(this, panel, "Record Payment", JOptionPane.OK_CANCEL_OPTION,
+                JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
             try {
                 double payment = Double.parseDouble(txtPayment.getText().trim());
                 if (payment <= 0 || payment > outstandingBalance) {
-                    JOptionPane.showMessageDialog(this, "Payment must be between 0 and the outstanding balance.", "Error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Payment must be between 0 and the outstanding balance.",
+                            "Error", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 // Call DAO to update purchase paid amount and supplier balance
                 boolean success = purchaseDao.updateSupplierPayment(purchaseId, payment); // Assumed DAO method
                 if (success) {
-                    JOptionPane.showMessageDialog(this, "Payment recorded successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                    JOptionPane.showMessageDialog(this, "Payment recorded successfully.", "Success",
+                            JOptionPane.INFORMATION_MESSAGE);
                     formRefresh(); // Refresh table
                 }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid numeric amount.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Please enter a valid numeric amount.", "Error",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -229,17 +239,23 @@ public class PurchaseTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
-                new ActionItem("View", this::onView),
-                new ActionItem("Payment", (table1, row) -> {
-                    int purchaseId = (int) tableModel.getValueAt(row, 0);
-                    String vendorName = tableModel.getValueAt(row, 1).toString();
-                    double balance = Double.parseDouble(tableModel.getValueAt(row, 5).toString());
-                    showPaymentDialog(purchaseId, balance, vendorName);
-                }), new ActionItem("Edit", (table1, row) -> {
-                    onEdit(row);
-                }), new ActionItem("Delete", (table1, row) -> {
-                    onDelete(row);
-                }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/view.svg", 1.5f),
+                        this::onView),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/payment.svg", 1.5f),
+                        (table1, row) -> {
+                            int purchaseId = (int) tableModel.getValueAt(row, 0);
+                            String vendorName = tableModel.getValueAt(row, 1).toString();
+                            double balance = Double.parseDouble(tableModel.getValueAt(row, 5).toString());
+                            showPaymentDialog(purchaseId, balance, vendorName);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            onEdit(row);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            onDelete(row);
+                        }),
         };
     }
 
@@ -251,7 +267,6 @@ public class PurchaseTablePanel extends Form implements TableActions {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormViewPurchase(purchaseId),
-                "View Purchase Details"
-        );
+                "View Purchase Details");
     }
 }

@@ -18,7 +18,7 @@ import javax.swing.table.DefaultTableModel;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Brands", description = "Manage product brands linked to companies", tags = {"brand", "table"})
+@SystemForm(name = "Brands", description = "Manage product brands linked to companies", tags = { "brand", "table" })
 public class BrandTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -52,7 +52,7 @@ public class BrandTablePanel extends Form implements TableActions {
         controlPanel.add(new JPanel(), "growx");
         controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
 
-//        add(controlPanel, "gapx 20, gaptop 10");
+        // add(controlPanel, "gapx 20, gaptop 10");
         add(controlPanel, "gaptop 10, gapbottom 5");
 
         model = new DefaultTableModel(Constants.brandsColumns, 0) {
@@ -69,7 +69,8 @@ public class BrandTablePanel extends Form implements TableActions {
             @Override
             protected int getAlignment(int column) {
                 // Center align Status and Action
-                if (column == 3 || column == 4) return SwingConstants.CENTER;
+                if (column == 3 || column == 4)
+                    return SwingConstants.CENTER;
                 return SwingConstants.LEADING;
             }
         });
@@ -83,13 +84,15 @@ public class BrandTablePanel extends Form implements TableActions {
         // Column Width Settings
         table.getColumnModel().getColumn(0).setPreferredWidth(50); // ID
         table.getColumnModel().getColumn(3).setPreferredWidth(100); // Status
-        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(150); // Action
+        table.getColumnModel().getColumn(actionColumnIndex).setPreferredWidth(50); // Action
 
         JScrollPane scroll = new JScrollPane(table);
         // Standard table styling
         scroll.setBorder(BorderFactory.createEmptyBorder());
-        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE, "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
-        table.putClientProperty(FlatClientProperties.STYLE, "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
+        table.getTableHeader().putClientProperty(FlatClientProperties.STYLE,
+                "height:30; hoverBackground:null; pressedBackground:null; separatorColor:$TableHeader.background;");
+        table.putClientProperty(FlatClientProperties.STYLE,
+                "rowHeight:30; showHorizontalLines:true; intercellSpacing:0,1; cellFocusColor:$TableHeader.hoverBackground; selectionBackground:$TableHeader.hoverBackground; selectionForeground:$Table.foreground;");
         add(scroll, "grow, push");
 
         // Pagination Panel
@@ -107,8 +110,7 @@ public class BrandTablePanel extends Form implements TableActions {
         JComponentUtils.showModal(
                 SwingUtilities.getWindowAncestor(this),
                 new FormBrand(brandId),
-                brandId > 0 ? "Edit Brand" : "Create New Brand"
-        );
+                brandId > 0 ? "Edit Brand" : "Create New Brand");
         formRefresh();
     }
 
@@ -121,7 +123,7 @@ public class BrandTablePanel extends Form implements TableActions {
         int totalBrands = brandDao.getBrandCount(); // Assuming this is implemented in BrandDao
 
         for (BrandModel brand : brands) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     brand.getBrandId(), // ID
                     brand.getBrandTitle(), // Brand Title
                     brand.getCompanyName(), // Company Name
@@ -147,24 +149,26 @@ public class BrandTablePanel extends Form implements TableActions {
 
     @Override
     public ActionItem[] tableActions() {
-        return new ActionItem[]{
-                new ActionItem("Edit", (table1, row) -> {
-                    int brandId = (int) table1.getValueAt(row, 0);
-                    openBrandFormModal(brandId);
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int brandId = (int) table1.getValueAt(row, 0);
-                    String brandTitle = table1.getValueAt(row, 1).toString();
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete brand: " + brandTitle + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+        return new ActionItem[] {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int brandId = (int) table1.getValueAt(row, 0);
+                            openBrandFormModal(brandId);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int brandId = (int) table1.getValueAt(row, 0);
+                            String brandTitle = table1.getValueAt(row, 1).toString();
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete brand: " + brandTitle + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int result = brandDao.deleteBrand(brandId);
-                        MessageUtils.showBrandMessage(result);
-                        formRefresh();
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                int result = brandDao.deleteBrand(brandId);
+                                MessageUtils.showBrandMessage(result);
+                                formRefresh();
+                            }
+                        })
         };
     }
 }

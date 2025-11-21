@@ -18,7 +18,7 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-@SystemForm(name = "Units", description = "Manage measurement unit records", tags = {"unit", "table"})
+@SystemForm(name = "Units", description = "Manage measurement unit records", tags = { "unit", "table" })
 public class UnitTablePanel extends Form implements TableActions {
 
     private JTable table;
@@ -41,7 +41,7 @@ public class UnitTablePanel extends Form implements TableActions {
         add(title, "gapx 20");
 
         // Table model: UnitID, UnitName, Action
-        Object[] columns = {"ID", "Unit Name", "Action"};
+        Object[] columns = { "ID", "Unit Name", "Action" };
         model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
@@ -78,7 +78,6 @@ public class UnitTablePanel extends Form implements TableActions {
         // Set fixed width for ID column
         table.getColumnModel().getColumn(0).setPreferredWidth(50);
         table.getColumnModel().getColumn(0).setMaxWidth(50);
-
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -119,7 +118,7 @@ public class UnitTablePanel extends Form implements TableActions {
         int totalUnits = UtilsDao.getCount("tblunits");
 
         for (UnitModel unitModel : allUnits) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     unitModel.getUnitID(),
                     unitModel.getUnitName()
             });
@@ -145,33 +144,38 @@ public class UnitTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         // Define the dynamic actions for the Unit table
-        return new ActionItem[]{
-                new ActionItem("Edit", (table1, row) -> {
-                    int unitId = (int) table1.getValueAt(row, 0); // Get UnitID from the first column
+        return new ActionItem[] {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int unitId = (int) table1.getValueAt(row, 0); // Get UnitID from the first column
 
-                    // 1. Instantiate the Unit Form with the ID
-                    FormUnits formPanel = new FormUnits(unitId);
+                            // 1. Instantiate the Unit Form with the ID
+                            FormUnits formPanel = new FormUnits(unitId);
 
-                    // 2. Create the Modal Dialog
-                    JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Unit", Dialog.ModalityType.APPLICATION_MODAL);
+                            // 2. Create the Modal Dialog
+                            JDialog dialog = new JDialog(SwingUtilities.getWindowAncestor(this), "Edit Unit",
+                                    Dialog.ModalityType.APPLICATION_MODAL);
 
-                    dialog.setContentPane(formPanel);
-                    dialog.pack();
-                    dialog.setLocationRelativeTo(null);
-                    dialog.setVisible(true); // Blocks until form is closed
+                            dialog.setContentPane(formPanel);
+                            dialog.pack();
+                            dialog.setLocationRelativeTo(null);
+                            dialog.setVisible(true); // Blocks until form is closed
 
-                    // 3. Refresh the table after closing the dialog
-                    formRefresh();
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int unitId = Integer.parseInt(table1.getValueAt(row, 0).toString());
-                    int confirm = JOptionPane.showConfirmDialog(table1, "Are you sure you want to delete unit: " + unitId + "?", "Confirm Delete", JOptionPane.YES_NO_OPTION);
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        // Implement deletion logic here
-                        unitDao.deleteUnitById(unitId);
-                        formRefresh(); // Refresh table after deletion
-                    }
-                })
+                            // 3. Refresh the table after closing the dialog
+                            formRefresh();
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int unitId = Integer.parseInt(table1.getValueAt(row, 0).toString());
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete unit: " + unitId + "?", "Confirm Delete",
+                                    JOptionPane.YES_NO_OPTION);
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                // Implement deletion logic here
+                                unitDao.deleteUnitById(unitId);
+                                formRefresh(); // Refresh table after deletion
+                            }
+                        })
         };
     }
 }

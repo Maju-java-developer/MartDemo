@@ -18,9 +18,8 @@ import java.awt.*;
 import java.text.DecimalFormat;
 import java.util.List;
 
-
-@SystemForm(name = "Customers", description = "Manage customer records", tags = {"customer", "table"})
-public class CustomerTablePanel extends Form implements TableActions{
+@SystemForm(name = "Customers", description = "Manage customer records", tags = { "customer", "table" })
+public class CustomerTablePanel extends Form implements TableActions {
 
     private JTable table;
     private DefaultTableModel model;
@@ -52,7 +51,6 @@ public class CustomerTablePanel extends Form implements TableActions{
             }
         };
 
-
         // Table
         table = new JTable(model);
 
@@ -68,13 +66,14 @@ public class CustomerTablePanel extends Form implements TableActions{
         });
 
         // Set renderer & editor for Action column
-        int getLastOneColumn = (table.getColumnCount() -1);
+        int getLastOneColumn = (table.getColumnCount() - 1);
         table.getColumnModel().getColumn(0).setMaxWidth(30);
         table.getColumnModel().getColumn(getLastOneColumn).setCellRenderer(new TableActionCellRenderer(tableActions()));
-        table.getColumnModel().getColumn(getLastOneColumn).setCellEditor(new TableActionCellEditor(table, tableActions()));
+        table.getColumnModel().getColumn(getLastOneColumn)
+                .setCellEditor(new TableActionCellEditor(table, tableActions()));
 
         // Optional: set fixed width for Action column
-        table.getColumnModel().getColumn(getLastOneColumn).setPreferredWidth(200);
+        table.getColumnModel().getColumn(getLastOneColumn).setPreferredWidth(50);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -114,7 +113,7 @@ public class CustomerTablePanel extends Form implements TableActions{
         int totalCustomers = UtilsDao.getCount("tblcustomers");
 
         for (CustomerModel customerModel : suppliers) {
-            model.addRow(new Object[]{
+            model.addRow(new Object[] {
                     customerModel.getCustomerId(),
                     customerModel.getCustomerName(),
                     customerModel.getContactNo(),
@@ -144,29 +143,32 @@ public class CustomerTablePanel extends Form implements TableActions{
     @Override
     public ActionItem[] tableActions() {
         // 1. Define the action logic using ActionItem
-        return new ActionItem[]{
-                new ActionItem("Payment", (table1, row) -> {
-                    String customerName = table1.getValueAt(row, 1).toString();
-                    JOptionPane.showMessageDialog(table1, "Add Payment for " + customerName);
-                }),
-                new ActionItem("Edit", (table1, row) -> {
-                    int customerId = (int) table1.getValueAt(row, 0);
-                    editFormPurchaseModal(customerId); // Open form in EDIT mode
-                }),
-                new ActionItem("Delete", (table1, row) -> {
-                    int customerId = (int) table1.getValueAt(row, 0);
-                    String customerName = table1.getValueAt(row, 1).toString();
+        return new ActionItem[] {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/payment.svg", 1.5f),
+                        (table1, row) -> {
+                            String customerName = table1.getValueAt(row, 1).toString();
+                            JOptionPane.showMessageDialog(table1, "Add Payment for " + customerName);
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
+                        (table1, row) -> {
+                            int customerId = (int) table1.getValueAt(row, 0);
+                            editFormPurchaseModal(customerId); // Open form in EDIT mode
+                        }),
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f),
+                        (table1, row) -> {
+                            int customerId = (int) table1.getValueAt(row, 0);
+                            String customerName = table1.getValueAt(row, 1).toString();
 
-                    int confirm = JOptionPane.showConfirmDialog(table1,
-                            "Are you sure you want to delete customer: " + customerName + "?",
-                            "Confirm Delete", JOptionPane.YES_NO_OPTION);
+                            int confirm = JOptionPane.showConfirmDialog(table1,
+                                    "Are you sure you want to delete customer: " + customerName + "?",
+                                    "Confirm Delete", JOptionPane.YES_NO_OPTION);
 
-                    if (confirm == JOptionPane.YES_OPTION) {
-                        int result = customerDao.deleteCustomer(customerId);
-                        showMessageResult(result);
-                        formRefresh();
-                    }
-                })
+                            if (confirm == JOptionPane.YES_OPTION) {
+                                int result = customerDao.deleteCustomer(customerId);
+                                showMessageResult(result);
+                                formRefresh();
+                            }
+                        })
         };
     }
 
