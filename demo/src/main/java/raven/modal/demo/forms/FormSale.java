@@ -650,62 +650,7 @@ public class FormSale extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
-//                new ActionItem("Edit", (table1, row) -> {
-//                    // 1. Get Data from Table
-//                    int productId = (int) detailModel.getValueAt(row, 7);
-//                    double totalQuantity = Double.parseDouble(detailModel.getValueAt(row, 2).toString());
-//                    double unitPrice = Double.parseDouble(detailModel.getValueAt(row, 3).toString());
-//                    double discount = Double.parseDouble(detailModel.getValueAt(row, 4).toString());
-//                    String productName = detailModel.getValueAt(row, 1).toString();
-//
-//                    // 2. Find Product in Cache to get UnitsPerCarton
-//                    ProductModel productToEdit = allProductsCache.stream()
-//                            .filter(p -> p.getProductId() == productId)
-//                            .findFirst()
-//                            .orElse(null);
-//
-//                    if (productToEdit == null) {
-//                        // Try fetching from DAO if not in cache (fallback)
-//                        productToEdit = productDao.getProductById(productId);
-//                    }
-//
-//                    if (productToEdit == null) {
-//                        JOptionPane.showMessageDialog(this, "Error: Could not retrieve product details for editing.",
-//                                "Error", JOptionPane.ERROR_MESSAGE);
-//                        return;
-//                    }
-//
-//                    // 3. Calculate Cartons and Units
-//                    int unitsPerCarton = productToEdit.getUnitsPerCarton();
-//                    double cartons = 0;
-//                    double units = totalQuantity;
-//
-//                    if (unitsPerCarton > 0) {
-//                        cartons = Math.floor(totalQuantity / unitsPerCarton);
-//                        units = totalQuantity % unitsPerCarton;
-//                    }
-//
-//                    // 4. Populate Input Fields
-//                    DefaultComboBoxModel<ProductModel> productModel = new DefaultComboBoxModel<>(
-//                            new ProductModel[] { productToEdit });
-//                    cmbProductSearch.setModel(productModel);
-//                    cmbProductSearch.setSelectedItem(productToEdit);
-//                    selectedProduct = productToEdit;
-//
-//                    JComponentUtils.resetTextField(txtCartons, String.valueOf((int) cartons));
-//                    JComponentUtils.resetTextField(txtUnits, String.format("%.2f", units));
-//                    JComponentUtils.resetTextField(txtUnitPrice, String.format("%.2f", unitPrice));
-//                    JComponentUtils.resetTextField(txtProductDiscount, String.format("%.2f", discount));
-//
-//                    // 5. Remove the row
-//                    onDelete(row);
-//
-//                    JOptionPane.showMessageDialog(this,
-//                            "Line item '" + productName + "' loaded for editing. Adjust values and click 'Add'.",
-//                            "Edit Mode",
-//                            JOptionPane.INFORMATION_MESSAGE);
-//                }),
-                new ActionItem("Delete", (table1, row) -> {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f), (table1, row) -> {
                     if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this line item?",
                             "Confirm Deletion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         onDelete(row);

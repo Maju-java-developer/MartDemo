@@ -64,17 +64,11 @@ public class PurchaseTablePanel extends Form implements TableActions {
     }
 
     private void setupTable() {
-        // Columns for detailed history view
-        // String[] columns = {"ID", "Vendor", "Date", "Actual Amt", "Discount",
-        // "Total", "Paid", "Balance", "Actions"};
-        String[] columns = { "#", "Vendor", "Date", "Total Amount", "Paid Amount", "Balance", "Actions" };
-
         tableModel = new DefaultTableModel(Constants.purchaseColumns, 0) {
             @Override
             public boolean isCellEditable(int row, int col) {
-                return col == (Constants.purchaseColumns.length - 1); // Actions column
+                return col == (Constants.purchaseColumns.length - 1);
             }
-            // Use String for numeric columns to prevent default sorting issues
         };
         purchaseTable = new JTable(tableModel);
 
@@ -148,8 +142,6 @@ public class PurchaseTablePanel extends Form implements TableActions {
         pagination.setSelectedPage(page);
         pagination.getModel().setPageRange(page, totalPages);
     }
-
-    // --- Actions Implementation ---
 
     public void onEdit(int row) {
         int purchaseId = (int) tableModel.getValueAt(row, 0);

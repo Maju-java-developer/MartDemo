@@ -712,7 +712,7 @@ public class FormPurchase extends Form implements TableActions {
 //                            JOptionPane.INFORMATION_MESSAGE);
 //                }),
 
-                new ActionItem("Delete", (table1, row) -> {
+                new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/delete.svg", 1.5f), (table1, row) -> {
                     if (JOptionPane.showConfirmDialog(this, "Are you sure you want to delete this line item?", "Confirm Deletion", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
                         onDelete(row);
                     }
