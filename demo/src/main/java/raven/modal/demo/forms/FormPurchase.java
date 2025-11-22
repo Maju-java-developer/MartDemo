@@ -415,6 +415,7 @@ public class FormPurchase extends Form implements TableActions {
             JOptionPane.showMessageDialog(this, "Please select a Vendor.", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
         }
+
         if (detailModel.getRowCount() == 0) {
             JOptionPane.showMessageDialog(this, "Please add at least one item to the purchase.", "Validation", JOptionPane.WARNING_MESSAGE);
             return;
@@ -436,6 +437,34 @@ public class FormPurchase extends Form implements TableActions {
         }
 
         String discountType = (String) cmbDiscountType.getSelectedItem();
+
+        // ------------------ DISCOUNT VALIDATION ------------------
+        if (discountType.startsWith("P")) {
+            if (discountValue < 0 || discountValue > 100) {
+                JOptionPane.showMessageDialog(this,
+                        "Percentage discount cannot be greater than 100%.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } else if (discountType.startsWith("F")) {
+            if (discountValue < 0 || discountValue > actualAmount) {
+                JOptionPane.showMessageDialog(this,
+                        "Fixed discount cannot be greater than Actual Amount.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
+        // ------------------ RECEIVED AMOUNT VALIDATION ------------------
+        if (paidAmount < 0 || paidAmount > totalAmount) {
+            JOptionPane.showMessageDialog(this,
+                    "Paid/Receiving amount cannot be greater than Total Amount.",
+                    "Validation",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // --- 2. CRITICAL STEP: Map details from JTable to List ---
         List<PurchaseDetailModel> details = new ArrayList<>();

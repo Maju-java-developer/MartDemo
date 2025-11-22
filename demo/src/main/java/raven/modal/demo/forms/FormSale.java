@@ -384,8 +384,17 @@ public class FormSale extends Form implements TableActions {
         // Calculate total price after discount
         double grossPrice = totalQuantity * unitPrice;
         double netPrice = grossPrice - productDiscount;
+
         if (netPrice < 0)
             netPrice = 0;
+        // ------------------ Validate productDiscount Amount ------------------
+        if (productDiscount > grossPrice) {
+            JOptionPane.showMessageDialog(this,
+                    "ProductDiscount cannot be greater than Total Amount.",
+                    "Validation",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // --- Add Row ---
         detailModel.addRow(new Object[] {
@@ -513,6 +522,36 @@ public class FormSale extends Form implements TableActions {
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Invalid number format detected in summary fields.", "Data Error",
                     JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        String discountType = cmbDiscountType.getSelectedItem().toString();
+
+        // ------------------ DISCOUNT VALIDATION ------------------
+        if (discountType.startsWith("P")) {
+            if (discountValue < 0 || discountValue > 100) {
+                JOptionPane.showMessageDialog(this,
+                        "Percentage discount cannot be greater than 100%.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        } else if (discountType.startsWith("F")) {
+            if (discountValue < 0 || discountValue > actualAmount) {
+                JOptionPane.showMessageDialog(this,
+                        "Fixed discount cannot be greater than Actual Amount.",
+                        "Validation",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
+        // ------------------ RECEIVED AMOUNT VALIDATION ------------------
+        if (receivedAmount < 0 || receivedAmount > totalAmount) {
+            JOptionPane.showMessageDialog(this,
+                    "Paid/Receiving amount cannot be greater than Total Amount.",
+                    "Validation",
+                    JOptionPane.WARNING_MESSAGE);
             return;
         }
 
