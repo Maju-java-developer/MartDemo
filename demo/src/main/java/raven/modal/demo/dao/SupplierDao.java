@@ -14,22 +14,25 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SupplierDao {
 
     /**
      * Fetches only those suppliers who have a remaining OutstandingBalance > 0.
      * This is used for the Payment dialog.
+     * 
      * @return List of SupplierModel with outstanding balances.
      */
     public List<SupplierModel> getRemainingBalanceSuppliers() {
-        // ASSUMPTION: The TBLSuppliers table has columns: SupplierID, Name, OutstandingBalance
+        // ASSUMPTION: The TBLSuppliers table has columns: SupplierID, Name,
+        // OutstandingBalance
         String sql = "SELECT SupplierID, SupplierName, OpeningBalance FROM TBLSuppliers WHERE OpeningBalance > 0 ORDER BY SupplierName ASC";
         List<SupplierModel> suppliers = new ArrayList<>();
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
+                PreparedStatement ps = conn.prepareStatement(sql);
+                ResultSet rs = ps.executeQuery()) {
 
             while (rs.next()) {
                 // Fetch only the necessary fields for the payment form
@@ -53,8 +56,8 @@ public class SupplierDao {
         suppliers.add(SupplierModel.builder().supplierID(0).supplierName("--- Select Vendor ---").build());
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+                Statement st = conn.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
                 suppliers.add(SupplierModel.builder()
@@ -68,7 +71,7 @@ public class SupplierDao {
         return suppliers;
     }
 
-    public List<SupplierModel> getSuppliers(int offset, int limit) {
+    public List<SupplierModel> getSuppliers(int offset, int limit, String searchText) {
         List<SupplierModel> list = new ArrayList<>();
 
         // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
@@ -82,7 +85,7 @@ public class SupplierDao {
             cs.setInt(1, 0);                  // p_Id
             cs.setInt(2, limit);              // p_DisplayLength
             cs.setInt(3, offset);             // p_DisplayStart
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            cs.setString(4, searchText); // p_Search
             cs.setString(5, "VendorList");    // p_ListBy (Mapping to TBLSuppliers)
             cs.setInt(6, 0);                  // p_UserID
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
@@ -90,7 +93,6 @@ public class SupplierDao {
             try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
                     SupplierModel model = new SupplierModel();
-                    // Columns remain the same as the SP SELECTS V.* (all columns)
                     model.setSupplierID(rs.getInt("SupplierID"));
                     model.setSupplierName(rs.getString("SupplierName"));
                     model.setContactNo(rs.getString("ContactNo"));
@@ -106,11 +108,12 @@ public class SupplierDao {
         }
         return list;
     }
+
     public int updateSupplier(SupplierModel supplier) {
         String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, supplier.getSupplierID());
             cs.setString(2, supplier.getSupplierName());
@@ -137,7 +140,7 @@ public class SupplierDao {
         String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, supplierId);
             cs.setNull(2, java.sql.Types.VARCHAR);
@@ -164,7 +167,7 @@ public class SupplierDao {
         String sql = "{ CALL SP_IUD_Vendor(?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setNull(1, java.sql.Types.INTEGER); // VendorID for save
             cs.setString(2, supplier.getSupplierName());
@@ -172,13 +175,13 @@ public class SupplierDao {
             cs.setString(4, supplier.getAddress());
             cs.setString(5, supplier.getEmail());
             cs.setDouble(6, supplier.getOpeningBalance());
-            cs.setInt(7, 1);                     // UserID
+            cs.setInt(7, 1); // UserID
             cs.setTimestamp(8, Timestamp.valueOf(LocalDateTime.now()));
             cs.setString(9, "Save");
 
             ResultSet rs = cs.executeQuery();
             if (rs.next()) {
-                return rs.getInt("Result");  // returns new ID or -3 (duplicate)
+                return rs.getInt("Result"); // returns new ID or -3 (duplicate)
             }
 
         } catch (SQLException e) {
@@ -203,11 +206,12 @@ public class SupplierDao {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
+
     public SupplierModel getSupplierById(int supplierId) {
         String sql = "SELECT SupplierID, SupplierName, ContactNo, Email, Address, OpeningBalance, CreatedDate FROM TBLSuppliers WHERE SupplierID = ?";
         SupplierModel supplier = null;
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, supplierId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -224,17 +228,19 @@ public class SupplierDao {
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error fetching vendor: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error fetching vendor: " + e.getMessage(), "DB Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
         return supplier;
     }
+
     /**
      * Fetches the current OutstandingBalance for a specific supplier.
      */
     public double getSupplierBalance(int supplierId) {
         String sql = "SELECT OpeningBalance FROM TBLSuppliers WHERE SupplierID = ?";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, supplierId);
             try (ResultSet rs = ps.executeQuery()) {

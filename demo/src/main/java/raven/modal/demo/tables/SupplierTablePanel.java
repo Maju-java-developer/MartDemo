@@ -2,32 +2,34 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.SupplierDao;
 import raven.modal.demo.dao.UtilsDao;
 import raven.modal.demo.forms.FormSupplier;
 import raven.modal.demo.model.SupplierModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Vendors", description = "Manage vendor records", tags = { "vendor", "table" })
-public class SupplierTablePanel extends Form implements TableActions {
+public class SupplierTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
-    private SupplierDao supplierDao = new SupplierDao();
+    private final SupplierDao supplierDao = new SupplierDao();
     private JPagination pagination;
     private JLabel lbTotal;
-    private JButton btnCreate; // Added standard create button
+    private JTextField txtSearch;
 
     public SupplierTablePanel() {
         initUI();
@@ -38,6 +40,29 @@ public class SupplierTablePanel extends Form implements TableActions {
         loadSuppliers(1);
     }
 
+    private JPanel addControlPanel() {
+        JPanel controlPanel = new JPanel(new MigLayout(
+                "fillx, insets 0",
+                "[grow][fill][fill]",
+                ""
+        ));
+
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Vendor...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
+        JButton btnCreate = new JButton("Create Vendor");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.addActionListener(e -> openSupplierFormModal(0)); // Open modal in ADD mode
+
+        // Now items appear starting from LEFT
+        controlPanel.add(txtSearch, "w 200!");
+        controlPanel.add(btnCreate, "w 150!, gapleft 10");
+        return controlPanel;
+    }
+
     private void initUI() {
         // Updated main insets for better spacing
         setLayout(new MigLayout("fillx,wrap,insets 15 20 10 20", "[fill]", "[][][fill,grow][]"));
@@ -46,16 +71,7 @@ public class SupplierTablePanel extends Form implements TableActions {
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");
         add(title, "gaptop 5");
 
-        // --- Control Panel (Includes Create Button) ---
-        JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill][right]", ""));
-        btnCreate = new JButton("Create Vendor");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE,
-                "font:bold; background:$Component.accentColor; foreground:white");
-        btnCreate.addActionListener(e -> openSupplierFormModal(0)); // Open modal in ADD mode
-
-        controlPanel.add(new JPanel(), "growx");
-        controlPanel.add(btnCreate, "align right, w 150!");
-        add(controlPanel, "gaptop 10, gapbottom 5");
+        add(addControlPanel(), "gaptop 10, gapbottom 5, wrap");
 
         model = new DefaultTableModel(Constants.supplierColumns, 0) {
             @Override
@@ -110,8 +126,10 @@ public class SupplierTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
+    
     // --- Modal Handler ---
     private void openSupplierFormModal(int id) {
         JComponentUtils.showModal(
@@ -126,8 +144,8 @@ public class SupplierTablePanel extends Form implements TableActions {
         int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
-        // NOTE: supplierDao.getSuppliers is assumed to be the pagination method
-        List<SupplierModel> suppliers = supplierDao.getSuppliers(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<SupplierModel> suppliers = supplierDao.getSuppliers(offset, limit, searchText);
         int totalSuppliers = UtilsDao.getCount("TBLSuppliers");
 
         // The logic for count++ or offset+1 is usually redundant if you display the ID
@@ -158,10 +176,6 @@ public class SupplierTablePanel extends Form implements TableActions {
     @Override
     public ActionItem[] tableActions() {
         return new ActionItem[] {
-                // new ActionItem("Payment", (table1, row) -> {
-                // String supplier = table1.getValueAt(row, 1).toString();
-                // JOptionPane.showMessageDialog(table1, "Add Payment for " + supplier);
-                // }),
                 new ActionItem(new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/edit.svg", 1.5f),
                         (table1, row) -> {
                             int supplierId = (int) table1.getValueAt(row, 0); // Get ID from first column
@@ -187,4 +201,20 @@ public class SupplierTablePanel extends Form implements TableActions {
         };
     }
 
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        KeyAdapter detailKeyAdapter = new KeyAdapter() {
+            /**
+             * Invoked when a key has been released.
+             *
+             * @param e
+             */
+            @Override
+            public void keyReleased(KeyEvent e) {
+                loadSuppliers(1);
+            }
+        };
+        txtSearch.addKeyListener(detailKeyAdapter); // Search on Enter
+    }
 }
