@@ -11,21 +11,25 @@ import raven.modal.demo.system.Form;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Customers", description = "Manage customer records", tags = { "customer", "table" })
-public class CustomerTablePanel extends Form implements TableActions {
+public class CustomerTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
     private final CustomerDao customerDao = new CustomerDao();
     private JPagination pagination;
     private JLabel lbTotal;
+    private JTextField txtSearch;
 
     public CustomerTablePanel() {
         initUI();
@@ -36,12 +40,36 @@ public class CustomerTablePanel extends Form implements TableActions {
         loadCustomers(1);
     }
 
+    private JPanel addControlPanel() {
+        JPanel controlPanel = new JPanel(new MigLayout(
+                "fillx, insets 0",
+                "[grow][fill][fill]",
+                ""));
+
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Customer...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
+        JButton btnCreate = new JButton("Create Customer");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.addActionListener(e -> editFormPurchaseModal(0)); // Open modal in ADD mode
+
+        // Now items appear starting from LEFT
+        controlPanel.add(txtSearch, "w 200!");
+        controlPanel.add(btnCreate, "w 150!, gapleft 10");
+        return controlPanel;
+    }
+
     private void initUI() {
-        setLayout(new MigLayout("fillx,wrap,insets 15 0 10 0", "[fill]", "[][fill,grow][]"));
+        setLayout(new MigLayout("fillx,wrap,insets 15 0 10 0", "[fill]", "[][][fill,grow][]"));
 
         JLabel title = new JLabel("Customer List");
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");
         add(title, "gapx 20");
+
+        add(addControlPanel(), "gaptop 10, gapbottom 5, wrap");
 
         model = new DefaultTableModel(Constants.customerColumns, 0) {
             @Override
@@ -102,6 +130,7 @@ public class CustomerTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
     private void loadCustomers(int page) {
@@ -109,7 +138,8 @@ public class CustomerTablePanel extends Form implements TableActions {
         int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
-        List<CustomerModel> suppliers = customerDao.getAllCustomers(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<CustomerModel> suppliers = customerDao.getAllCustomers(offset, limit, searchText);
         int totalCustomers = UtilsDao.getCount("tblcustomers");
 
         for (CustomerModel customerModel : suppliers) {
@@ -185,5 +215,22 @@ public class CustomerTablePanel extends Form implements TableActions {
         dialog.setVisible(true);
 
         formRefresh(); // Refresh table after form closes
+    }
+
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        KeyAdapter detailKeyAdapter = new KeyAdapter() {
+            /**
+             * Invoked when a key has been released.
+             *
+             * @param e
+             */
+            @Override
+            public void keyReleased(KeyEvent e) {
+                loadCustomers(1);
+            }
+        };
+        txtSearch.addKeyListener(detailKeyAdapter); // Search on Enter
     }
 }

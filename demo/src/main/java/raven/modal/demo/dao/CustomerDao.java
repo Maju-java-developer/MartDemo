@@ -109,7 +109,8 @@ public class CustomerDao {
             cs.setString(10, "Delete");
 
             ResultSet rs = cs.executeQuery();
-            if (rs.next()) return rs.getInt("Result");
+            if (rs.next())
+                return rs.getInt("Result");
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(null, "Error deleting customer: " + e.getMessage());
@@ -117,23 +118,28 @@ public class CustomerDao {
 
         return 0;
     }
-    public List<CustomerModel> getAllCustomers(int offset, int limit) {
+
+    public List<CustomerModel> getAllCustomers(int offset, int limit, String searchText) {
         List<CustomerModel> customers = new ArrayList<>();
 
         // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
         String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             // 🔴 CHANGE 2: Use CallableStatement
-             CallableStatement cs = conn.prepareCall(sql)) {
+                // 🔴 CHANGE 2: Use CallableStatement
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             // --- Map SP Parameters ---
-            cs.setInt(1, 0);                  // p_Id
-            cs.setInt(2, limit);              // p_DisplayLength (Your limit)
-            cs.setInt(3, offset);             // p_DisplayStart (Your offset)
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
-            cs.setString(5, "CustomerList");  // p_ListBy (REQUIRED)
-            cs.setInt(6, 0);                  // p_UserID
+            cs.setInt(1, 0); // p_Id
+            cs.setInt(2, limit); // p_DisplayLength (Your limit)
+            cs.setInt(3, offset); // p_DisplayStart (Your offset)
+            if (searchText == null) {
+                cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            } else {
+                cs.setString(4, searchText); // p_Search
+            }
+            cs.setString(5, "CustomerList"); // p_ListBy (REQUIRED)
+            cs.setInt(6, 0); // p_UserID
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
             try (ResultSet rs = cs.executeQuery()) {
@@ -158,7 +164,7 @@ public class CustomerDao {
         String sql = "SELECT CustomerID, CustomerName, ContactNo, Email, Address, OpeningBalance, TaxPer, City FROM TBLCustomers WHERE CustomerID = ?";
         CustomerModel customer = null;
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, customerId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -177,10 +183,10 @@ public class CustomerDao {
                 }
             }
         } catch (SQLException e) {
-            JOptionPane.showMessageDialog(null, "Error fetching customer: " + e.getMessage(), "DB Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(null, "Error fetching customer: " + e.getMessage(), "DB Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
         return customer;
     }
 
 }
-
