@@ -37,7 +37,7 @@ public class FormPurchase extends Form implements TableActions {
 
     // --- Detail Row Input Components ---
     private JComboBox<ProductModel> cmbProductSearch; // Searchable Product Field
-    private JTextField txtCartons, txtUnits, txtUnitPrice;
+    private JTextField txtCartons, txtUnits, txtUnitPrice, txtRowTotal;
     private JButton btnAdd;
 
     // --- Table Components ---
@@ -151,16 +151,27 @@ public class FormPurchase extends Form implements TableActions {
     // --- UI Panel Creation Methods ---
 
     private JPanel createDetailInputPanel() {
-        // Layout: [Product][Cartons][Units][Unit Price][Add Button]
-        JPanel panel = new JPanel(new MigLayout("wrap 5, fillx, insets 0", "[grow, 400][100][100][100][grow, 80]", ""));
+        // Layout updated: added one extra column for Row Total
+        JPanel panel = new JPanel(new MigLayout(
+                "wrap 6, fillx, insets 0",
+                "[grow, 400][100][100][100][100][grow, 80]", ""
+        ));
 
         cmbProductSearch = new JComboBox<>();
         txtCartons = new JTextField("0");
         JComponentUtils.setNumberOnly(txtCartons);
+
         txtUnits = new JTextField("0");
         JComponentUtils.setNumberOnly(txtUnits);
+
         txtUnitPrice = new JTextField("0.00");
         JComponentUtils.setNumberOnly(txtUnitPrice);
+
+        // ✅ New Row Total Field
+        txtRowTotal = new JTextField("0.00");
+        txtRowTotal.setEditable(false);     // Read-only field
+        txtRowTotal.setBackground(new Color(235, 235, 235));
+
         btnAdd = new JButton("Add");
         btnAdd.setBackground(new Color(50, 150, 250));
         btnAdd.setForeground(Color.WHITE);
@@ -168,16 +179,20 @@ public class FormPurchase extends Form implements TableActions {
         cmbProductSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter product name or code");
         cmbProductSearch.setEditable(true);
 
+        // ---------- Labels ----------
         panel.add(new JLabel("Product"));
         panel.add(new JLabel("Cartons"));
         panel.add(new JLabel("Units"));
         panel.add(new JLabel("Unit Price"));
-        panel.add(new JLabel("")); // Placeholder for Add button label
+        panel.add(new JLabel("Total"));     // ✔ Added label
+        panel.add(new JLabel("")); // For Add button spacing
 
+        // ---------- Inputs Row ----------
         panel.add(cmbProductSearch, "h 30!, wmin 150, growx");
         panel.add(txtCartons, "h 30!, wmin 100");
         panel.add(txtUnits, "h 30!, wmin 100");
         panel.add(txtUnitPrice, "h 30!, wmin 100");
+        panel.add(txtRowTotal, "h 30!, wmin 100");     // ✔ Added field
         panel.add(btnAdd, "h 30!, wmin 100");
 
         btnAdd.addActionListener(this::addProductDetailRow);
@@ -185,6 +200,7 @@ public class FormPurchase extends Form implements TableActions {
 
         return panel;
     }
+
 
     private JPanel createDetailTablePanel() {
         JPanel panel = new JPanel(new MigLayout("wrap, fillx, insets 0", "[fill]"));
@@ -525,9 +541,9 @@ public class FormPurchase extends Form implements TableActions {
         // Set Summary Fields
         txtActualAmount.setText(String.format("%.2f", purchase.getActualAmount()));
         cmbDiscountType.setSelectedItem(purchase.getDiscountType());
-        txtDiscountValue.setText(String.format("%.2f", purchase.getDiscountValue()));
-        txtTotalAmount.setText(String.format("%.2f", purchase.getTotalAmount()));
-        txtPayingAmount.setText(String.format("%.2f", purchase.getPaidAmount()));
+        JComponentUtils.resetTextField(txtDiscountValue, String.format("%.2f", purchase.getDiscountValue()));
+        JComponentUtils.resetTextField(txtTotalAmount, String.format("%.2f", purchase.getTotalAmount()));
+        JComponentUtils.resetTextField(txtPayingAmount, String.format("%.2f", purchase.getPaidAmount()));
         txtComment.setText(purchase.getRemarks());
 
         // --- 2. Load Detail Data (Table Rows) ---
@@ -592,6 +608,7 @@ public class FormPurchase extends Form implements TableActions {
      * (if a txtRowTotal field were present, it would update it here).
      */
     private void calculateDetailRowTotal() {
+        System.out.println("calculateDetailRowTotal Called");
         // 1. Check for valid product selection
         if (selectedProduct == null || selectedProduct.getUnitsPerCarton() <= 0) {
             // Since there is no dedicated 'Row Total' field to update, we reset the Unit Price
@@ -619,18 +636,7 @@ public class FormPurchase extends Form implements TableActions {
 
         // Total Row Price = Total Quantity * Unit Price
         double totalRowPrice = totalQuantity * unitPrice;
-
-        // --- Display Feedback (Crucial for UX) ---
-        // Since the UI design does not show a 'Row Total' field in the input bar:
-        //
-        // If you add a JTextField named 'txtRowTotal' to the input panel:
-        //
-        // if (txtRowTotal != null) {
-        //     txtRowTotal.setText(String.format("%.2f", totalRowPrice));
-        // }
-
-        // For now, this method simply performs the necessary calculation that will be
-        // used and finalized when the 'Add' button is clicked.
+        JComponentUtils.resetTextField(txtRowTotal, String.format("%.2f", totalRowPrice));
     }
 
     private void setupInputListeners() {

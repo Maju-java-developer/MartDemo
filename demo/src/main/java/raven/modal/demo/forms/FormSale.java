@@ -39,7 +39,7 @@ public class FormSale extends Form implements TableActions {
 
     // --- Detail Row Input Components ---
     private JComboBox<ProductModel> cmbProductSearch;
-    private JTextField txtCartons, txtUnits, txtUnitPrice, txtProductDiscount;
+    private JTextField txtCartons, txtUnits, txtUnitPrice, txtRowTotal, txtProductDiscount;
     private JButton btnAdd;
 
     // --- Table Components ---
@@ -61,6 +61,18 @@ public class FormSale extends Form implements TableActions {
 
     private ProductModel selectedProduct;
     private List<ProductModel> allProductsCache;
+
+    @Override
+    public void formOpen() {
+        // Load all products for the searchable combo box
+        allProductsCache = productDao.getAllActiveProducts();
+    }
+
+    @Override
+    public void formRefresh() {
+        // Load all products for the searchable combo box
+        allProductsCache = productDao.getAllActiveProducts();
+    }
 
     public FormSale(int saleId) {
         this.saleId = saleId;
@@ -93,18 +105,30 @@ public class FormSale extends Form implements TableActions {
     // --- UI Component Creation ---
 
     private JPanel createDetailInputPanel() {
-        // Layout: [Product][Cartons][Units][Unit Price][Discount][Add Button]
-        JPanel panel = new JPanel(new MigLayout("wrap 6, fillx, insets 0", "[grow, 300][80][80][100][80][80]", ""));
+        // Layout: [Product][Cartons][Units][Unit Price][Row Total][Discount][Add Button]
+        JPanel panel = new JPanel(new MigLayout(
+                "wrap 7, fillx, insets 0",
+                "[grow, 300][80][80][100][100][80][80]", ""
+        ));
 
         cmbProductSearch = new JComboBox<>();
         txtCartons = new JTextField("0");
         JComponentUtils.setNumberOnly(txtCartons);
+
         txtUnits = new JTextField("0");
         JComponentUtils.setNumberOnly(txtUnits);
+
         txtUnitPrice = new JTextField("0.00");
         JComponentUtils.setNumberOnly(txtUnitPrice);
-        txtProductDiscount = new JTextField("0"); // New Discount Field
+
+        // ✅ New Row Total field – before Discount
+        txtRowTotal = new JTextField("0.00");
+        txtRowTotal.setEditable(false);
+        txtRowTotal.setBackground(new Color(235, 235, 235));
+
+        txtProductDiscount = new JTextField("0");
         JComponentUtils.setNumberOnly(txtProductDiscount);
+
         btnAdd = new JButton("Add");
         btnAdd.setBackground(new Color(50, 150, 250));
         btnAdd.setForeground(Color.WHITE);
@@ -112,19 +136,23 @@ public class FormSale extends Form implements TableActions {
         cmbProductSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Enter product name or code");
         cmbProductSearch.setEditable(true);
 
+        // ---------- Labels ----------
         panel.add(new JLabel("Product"));
         panel.add(new JLabel("Cartons"));
         panel.add(new JLabel("Units"));
         panel.add(new JLabel("Unit Price"));
+        panel.add(new JLabel("Row Total"));     // ✔ added before Discount
         panel.add(new JLabel("Discount"));
         panel.add(new JLabel(""));
 
+        // ---------- Inputs ----------
         panel.add(cmbProductSearch, "h 30!, growx");
-        panel.add(txtCartons, "h 30!, growx");
-        panel.add(txtUnits, "h 30!, growx");
-        panel.add(txtUnitPrice, "h 30!, growx");
-        panel.add(txtProductDiscount, "h 30!, growx");
-        panel.add(btnAdd, "h 30!, growx");
+        panel.add(txtCartons, "h 30!, wmin 100");
+        panel.add(txtUnits, "h 30!, wmin 100");
+        panel.add(txtUnitPrice, "h 30!, wmin 100");
+        panel.add(txtRowTotal, "h 30!, wmin 100");       // ✔ inserted here
+        panel.add(txtProductDiscount, "h 30!, wmin 100"); // stays after total
+        panel.add(btnAdd, "h 30!, wmin 100");
 
         btnAdd.addActionListener(this::addProductDetailRow);
         setupProductSearchCombo();
@@ -237,8 +265,8 @@ public class FormSale extends Form implements TableActions {
 
         cmbDiscountType.setModel(new DefaultComboBoxModel<>(Constants.DISCOUNT_TYPES));
 
-        // Load all products for the searchable combo box
-        allProductsCache = productDao.getAllActiveProducts();
+//        // Load all products for the searchable combo box
+//        allProductsCache = productDao.getAllActiveProducts();
         // The combo box model will be dynamically populated by
         // performSearch/setupProductSearchCombo
     }
@@ -418,6 +446,7 @@ public class FormSale extends Form implements TableActions {
         JComponentUtils.resetTextField(txtCartons, "0");
         JComponentUtils.resetTextField(txtUnits, "0");
         JComponentUtils.resetTextField(txtUnitPrice, "0.00");
+        JComponentUtils.resetTextField(txtRowTotal, "0.00");
         JComponentUtils.resetTextField(txtProductDiscount, "0");
         ((JTextField) cmbProductSearch.getEditor().getEditorComponent()).setText("");
         selectedProduct = null;
@@ -658,8 +687,7 @@ public class FormSale extends Form implements TableActions {
         KeyAdapter detailKeyAdapter = new KeyAdapter() {
             @Override
             public void keyReleased(KeyEvent e) {
-                // calculateDetailRowTotal(); // Helper method to update the row price fields
-                // (if any)
+                calculateDetailRowTotal();
             }
         };
 
@@ -698,7 +726,7 @@ public class FormSale extends Form implements TableActions {
         };
     }
 
-    public void onDelete(int row) {
+    private void onDelete(int row) {
         detailModel.removeRow(row);
         // Re-sequence Sr# column
         for (int i = 0; i < detailModel.getRowCount(); i++) {
@@ -706,4 +734,36 @@ public class FormSale extends Form implements TableActions {
         }
         updateActualAmount(); // Recalculate totals
     }
+
+    private void calculateDetailRowTotal() {
+        // 1. Check for valid product selection
+        if (selectedProduct == null || selectedProduct.getUnitsPerCarton() <= 0) {
+            // Since there is no dedicated 'Row Total' field to update, we reset the Unit Price
+            // and rely on the validation in addDetailRow().
+            return;
+        }
+
+        double cartons = 0, units = 0, unitPrice = 0;
+
+        // 2. Safely parse input values
+        try {
+            cartons = Double.parseDouble(txtCartons.getText().trim());
+            units = Double.parseDouble(txtUnits.getText().trim());
+            unitPrice = Double.parseDouble(txtUnitPrice.getText().trim());
+        } catch (NumberFormatException e) {
+            // If any field is invalid during typing, suppress the error and stop calculation.
+            return;
+        }
+
+        int unitsPerCarton = selectedProduct.getUnitsPerCarton();
+
+        // 3. Calculation
+        // Total Quantity = (Cartons * Units Per Carton) + Loose Units
+        double totalQuantity = (cartons * unitsPerCarton) + units;
+
+        // Total Row Price = Total Quantity * Unit Price
+        double totalRowPrice = totalQuantity * unitPrice;
+        JComponentUtils.resetTextField(txtRowTotal, String.format("%.2f", totalRowPrice));
+    }
+
 }
