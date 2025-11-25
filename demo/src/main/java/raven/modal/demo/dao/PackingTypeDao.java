@@ -108,7 +108,7 @@ public class PackingTypeDao {
         return type;
     }
 
-    public List<PackingTypeModel> getAllPackingTypes(int offset, int limit) {
+    public List<PackingTypeModel> getAllPackingTypes(int offset, int limit, String searchText) {
         List<PackingTypeModel> types = new ArrayList<>();
 
         // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
@@ -122,7 +122,7 @@ public class PackingTypeDao {
             cs.setInt(1, 0);                  // p_Id
             cs.setInt(2, limit);              // p_DisplayLength
             cs.setInt(3, offset);             // p_DisplayStart
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
+            cs.setString(4, searchText); // p_Search
             cs.setString(5, "PackingTypeList");// p_ListBy
             cs.setInt(6, 0);                  // p_UserID
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
