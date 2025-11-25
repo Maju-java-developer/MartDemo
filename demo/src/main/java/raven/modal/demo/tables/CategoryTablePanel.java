@@ -35,7 +35,7 @@ public class CategoryTablePanel extends Form implements TableActions {
     }
 
     private void initUI() {
-        setLayout(new MigLayout("fillx,wrap,insets 15 0 10 0", "[fill]", "[][][fill,grow][]"));
+        setLayout(new MigLayout("fillx,wrap,insets 15 20 10 20", "[fill]", "[][][fill,grow][]"));
 
         JLabel title = new JLabel("Category List");
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");

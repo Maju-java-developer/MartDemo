@@ -58,12 +58,12 @@ public class CustomerTablePanel extends Form implements TableActions, InputListe
 
         // Now items appear starting from LEFT
         controlPanel.add(txtSearch, "w 200!");
-        controlPanel.add(btnCreate, "w 150!, gapleft 10");
+//        controlPanel.add(btnCreate, "w 150!, gapleft 10");
         return controlPanel;
     }
 
     private void initUI() {
-        setLayout(new MigLayout("fillx,wrap,insets 15 0 10 0", "[fill]", "[][][fill,grow][]"));
+        setLayout(new MigLayout("fillx,wrap,insets 15 20 10 20", "[fill]", "[][][fill,grow][]"));
 
         JLabel title = new JLabel("Customer List");
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");
@@ -122,7 +122,6 @@ public class CustomerTablePanel extends Form implements TableActions, InputListe
 
         // Pagination
         pagination = new JPagination(11, 1, 1);
-        pagination.addChangeListener(e -> loadCustomers(pagination.getSelectedPage()));
         JPanel pagePanel = new JPanel(new MigLayout("insets 5 15 5 15", "[][]push[]"));
         pagePanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
         lbTotal = new JLabel("0");
@@ -220,7 +219,7 @@ public class CustomerTablePanel extends Form implements TableActions, InputListe
     @Override
     public void setupInputListener() {
         // Listener for Detail Row Total Calculation
-        KeyAdapter detailKeyAdapter = new KeyAdapter() {
+        KeyAdapter txtSearchListener = new KeyAdapter() {
             /**
              * Invoked when a key has been released.
              *
@@ -231,6 +230,9 @@ public class CustomerTablePanel extends Form implements TableActions, InputListe
                 loadCustomers(1);
             }
         };
-        txtSearch.addKeyListener(detailKeyAdapter); // Search on Enter
+        txtSearch.addKeyListener(txtSearchListener); // Search on Enter
+        // pagination Change Listener
+        pagination.addChangeListener(e -> loadCustomers(pagination.getSelectedPage()));
+
     }
 }
