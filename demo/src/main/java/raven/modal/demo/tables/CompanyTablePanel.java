@@ -13,6 +13,8 @@ import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -20,14 +22,14 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Companies", description = "Manage company records", tags = { "company", "table" })
-public class CompanyTablePanel extends Form implements TableActions {
+public class CompanyTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
-    private CompanyDao companyDao;
+    private final CompanyDao companyDao;
     private JPagination pagination;
     private JLabel lbTotal;
-    private JButton btnCreate;
+    private JTextField txtSearch;
 
     public CompanyTablePanel() {
         companyDao = new CompanyDao();
@@ -47,11 +49,17 @@ public class CompanyTablePanel extends Form implements TableActions {
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
         controlPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
-        btnCreate = new JButton("Create Company");
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Company...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
+        JButton btnCreate = new JButton("Create Company");
         btnCreate.putClientProperty(FlatClientProperties.STYLE,
                 "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openCompanyFormModal(0)); // Open modal in ADD mode
 
+        controlPanel.add(txtSearch, "w 200!");
         controlPanel.add(new JPanel(), "growx"); // Spacer to push button right
         controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
         add(controlPanel, "gapx 20, gaptop 10");
@@ -110,6 +118,7 @@ public class CompanyTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
     // --- MODAL DIALOG METHOD ---
@@ -187,5 +196,17 @@ public class CompanyTablePanel extends Form implements TableActions {
                             }
                         })
         };
+    }
+
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        java.awt.event.KeyAdapter txtSearchListener = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                loadCompanies(1);
+            }
+        };
+        txtSearch.addKeyListener(txtSearchListener); // Search on Enter
     }
 }

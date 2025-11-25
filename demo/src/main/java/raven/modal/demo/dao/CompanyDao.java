@@ -20,7 +20,7 @@ public class CompanyDao {
         String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setNull(1, java.sql.Types.INTEGER); // CompanyID NULL for insert
             cs.setString(2, company.getCompanyName());
@@ -45,11 +45,12 @@ public class CompanyDao {
 
     // --- READ/FETCH Single Record Method (For Edit Form) ---
     public CompanyModel getCompanyById(int companyId) {
-        // Select all fields, even if the form only displays two, to accurately represent the record.
+        // Select all fields, even if the form only displays two, to accurately
+        // represent the record.
         String sql = "SELECT CompanyID, CompanyName, IsActive FROM TBLCompanies WHERE CompanyID = ?";
         CompanyModel company = null;
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+                PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setInt(1, companyId);
             try (ResultSet rs = ps.executeQuery()) {
@@ -114,7 +115,7 @@ public class CompanyDao {
         String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, company.getCompanyId());
             cs.setString(2, company.getCompanyName());
@@ -137,12 +138,11 @@ public class CompanyDao {
         return 0;
     }
 
-
     public int deleteCompany(int companyId) {
         String sql = "{ CALL SP_IUD_Company(?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, companyId);
             cs.setNull(2, java.sql.Types.VARCHAR);
@@ -168,6 +168,7 @@ public class CompanyDao {
     // --- HELPER METHOD: Get Active Companies for Dropdown ---
     /**
      * Fetches only active Company IDs and Names to populate a JComboBox.
+     * 
      * @return List of CompanyModel containing only ID and Name.
      */
     public List<CompanyModel> getActiveCompaniesForDropdown() {
@@ -179,8 +180,8 @@ public class CompanyDao {
         companies.add(CompanyModel.builder().companyId(0).companyName("--- Select Company ---").build());
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+                Statement st = conn.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
 
             while (rs.next()) {
                 companies.add(CompanyModel.builder()
