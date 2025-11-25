@@ -30,7 +30,7 @@ public class ProductDao {
         // 13 parameters total: 12 IN + 1 OUT
         String storedProcCall = "{CALL SP_IUD_Product(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}";
 
-        int returnCode = 0;
+        int returnCode;
         Timestamp currentTimestamp = Timestamp.valueOf(LocalDateTime.now());
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
@@ -136,7 +136,7 @@ public class ProductDao {
         String sql = "SELECT p.ProductID, p.ProductCode, p.ProductName, p.PackingTypeId, pt.cartonQty as UnitPerCarton " +
                 "FROM TBLProducts p " +
                 "JOIN TBLPackingType pt ON p.PackingTypeId = pt.PackingTypeId " +
-                "WHERE p.IsActive = TRUE ORDER BY p.ProductName ASC";
+                "WHERE p.IsActive = TRUE ORDER BY p.ProductName ";
 
         List<ProductModel> products = new ArrayList<>();
 
@@ -165,7 +165,7 @@ public class ProductDao {
      * @param limit  The maximum number of rows to return.
      * @return A List of ProductModel objects.
      */
-    public List<ProductModel> getAllProducts(int offset, int limit) {
+    public List<ProductModel> getAllProducts(int offset, int limit, String searchText) {
         List<ProductModel> products = new ArrayList<>();
 
         // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
@@ -179,11 +179,10 @@ public class ProductDao {
             cs.setInt(1, 0);                 // p_Id (Unused for list)
             cs.setInt(2, limit);             // p_DisplayLength (Your limit)
             cs.setInt(3, offset);            // p_DisplayStart (Your offset)
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
+            cs.setString(4, searchText); // p_Search (NULL)
             cs.setString(5, "ProductList");  // p_ListBy (REQUIRED)
             cs.setInt(6, 0);                 // p_UserID (Unused)
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime (Unused)
-
 
             try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {

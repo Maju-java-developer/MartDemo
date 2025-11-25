@@ -3,14 +3,15 @@ package raven.modal.demo.tables;
 import com.formdev.flatlaf.FlatClientProperties;
 import com.formdev.flatlaf.extras.FlatSVGIcon;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.UtilsDao;
 import raven.modal.demo.forms.FormProducts;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -20,13 +21,15 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Products", description = "View and manage product records", tags = { "product", "table" })
-public class ProductTablePanel extends Form implements TableActions {
+public class ProductTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
-    private ProductDao productDao = new ProductDao();
+    private final ProductDao productDao = new ProductDao();
     private JPagination pagination;
     private JLabel lbTotal;
+    private JTextField txtSearch;
+    private JButton btnCreate;
 
     public ProductTablePanel() {
         initUI();
@@ -38,11 +41,30 @@ public class ProductTablePanel extends Form implements TableActions {
     }
 
     private void initUI() {
-        setLayout(new MigLayout("fillx,wrap,insets 15 20 10 20", "[fill]", "[][fill,grow][]"));
+        setLayout(new MigLayout("fillx,wrap,insets 15 20 10 20", "[fill]", "[][][fill,grow][]"));
 
         JLabel title = new JLabel("Product List");
         title.putClientProperty(FlatClientProperties.STYLE, "font:bold +3");
         add(title, "gapx 20");
+
+        // --- Control Panel (Includes Create Button) ---
+        JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
+        controlPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
+
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Product...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
+        btnCreate = new JButton("Create Product");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.addActionListener(e -> openProductFormModal(0)); // Open modal in ADD mode
+
+        controlPanel.add(txtSearch, "w 200!");
+        controlPanel.add(new JPanel(), "growx");
+        controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
+        add(controlPanel, "gapx 20, gaptop 10");
 
         // Table model: Only show required columns
         model = new DefaultTableModel(Constants.productColumns, 0) {
@@ -107,6 +129,7 @@ public class ProductTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
     private void loadProducts(int page) {
@@ -116,7 +139,8 @@ public class ProductTablePanel extends Form implements TableActions {
         int offset = (page - 1) * limit;
 
         // Fetch data using the DAO
-        List<ProductModel> products = productDao.getAllProducts(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<ProductModel> products = productDao.getAllProducts(offset, limit, searchText);
         int totalProducts = UtilsDao.getCount("tblproducts");
 
         for (ProductModel productModel : products) {
@@ -165,6 +189,7 @@ public class ProductTablePanel extends Form implements TableActions {
                     }
                 })
         };
+
     }
 
     private void openProductFormModal(int typeId) {
@@ -191,5 +216,17 @@ public class ProductTablePanel extends Form implements TableActions {
         } else if (returnCode == 0) {
             // Error already displayed by DAO (e.g., Integrity Constraint)
         }
+    }
+
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        java.awt.event.KeyAdapter txtSearchListener = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                loadProducts(1);
+            }
+        };
+        txtSearch.addKeyListener(txtSearchListener); // Search on Enter
     }
 }
