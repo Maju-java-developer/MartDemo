@@ -10,6 +10,7 @@ import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -19,13 +20,14 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Brands", description = "Manage product brands linked to companies", tags = { "brand", "table" })
-public class BrandTablePanel extends Form implements TableActions {
+public class BrandTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
     private BrandDao brandDao;
     private JPagination pagination;
     private JLabel lbTotal;
+    private JTextField txtSearch;
     private JButton btnCreate;
 
     public BrandTablePanel() {
@@ -45,10 +47,17 @@ public class BrandTablePanel extends Form implements TableActions {
         // --- Control Panel (Includes Create Button) ---
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
 
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Brand...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
         btnCreate = new JButton("Create Brand");
-        btnCreate.putClientProperty(FlatClientProperties.STYLE, "font:bold; background:$Component.accentColor; foreground:white");
+        btnCreate.putClientProperty(FlatClientProperties.STYLE,
+                "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openBrandFormModal(0)); // Open modal in ADD mode
 
+        controlPanel.add(txtSearch, "w 200!");
         controlPanel.add(new JPanel(), "growx");
         controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
 
@@ -104,6 +113,7 @@ public class BrandTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
     private void openBrandFormModal(int brandId) {
@@ -119,7 +129,8 @@ public class BrandTablePanel extends Form implements TableActions {
         int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
-        List<BrandModel> brands = brandDao.getAllBrands(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<BrandModel> brands = brandDao.getAllBrands(offset, limit, searchText);
         int totalBrands = brandDao.getBrandCount(); // Assuming this is implemented in BrandDao
 
         for (BrandModel brand : brands) {
@@ -170,5 +181,17 @@ public class BrandTablePanel extends Form implements TableActions {
                             }
                         })
         };
+    }
+
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        java.awt.event.KeyAdapter txtSearchListener = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                loadBrands(1);
+            }
+        };
+        txtSearch.addKeyListener(txtSearchListener); // Search on Enter
     }
 }

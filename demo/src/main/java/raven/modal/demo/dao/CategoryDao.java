@@ -102,23 +102,23 @@ public class CategoryDao {
         return category;
     }
 
-    public List<CategoryModel> getAllCategories(int offset, int limit) {
+    public List<CategoryModel> getAllCategories(int offset, int limit, String searchText) {
         List<CategoryModel> categories = new ArrayList<>();
 
         // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
         String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             // 🔴 CHANGE 2: Use CallableStatement
-             CallableStatement cs = conn.prepareCall(sql)) {
+                // 🔴 CHANGE 2: Use CallableStatement
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             // --- Map SP Parameters ---
-            cs.setInt(1, 0);                 // p_Id (Unused for list)
-            cs.setInt(2, limit);             // p_DisplayLength (Your limit)
-            cs.setInt(3, offset);            // p_DisplayStart (Your offset)
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL since no search logic in Java method)
+            cs.setInt(1, 0); // p_Id (Unused for list)
+            cs.setInt(2, limit); // p_DisplayLength (Your limit)
+            cs.setInt(3, offset); // p_DisplayStart (Your offset)
+            cs.setString(4, searchText); // p_Search (NULL since no search logic in Java method)
             cs.setString(5, "CategoryList"); // p_ListBy (REQUIRED)
-            cs.setInt(6, 0);                 // p_UserID (Unused)
+            cs.setInt(6, 0); // p_UserID (Unused)
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime (Unused)
 
             try (ResultSet rs = cs.executeQuery()) {

@@ -85,31 +85,43 @@ public class BrandDao {
 
         return 0;
     }
+
     /**
      * Fetches paginated brand data along with the associated Company Name.
+     * 
      * @param offset The starting index for pagination.
-     * @param limit The maximum number of records to return.
-     * @return List of Object[] where each array is {BrandId, BrandTitle, CompanyName, IsActive}.
+     * @param limit  The maximum number of records to return.
+     * @return List of Object[] where each array is {BrandId, BrandTitle,
+     *         CompanyName, IsActive}.
      */
-    public List<BrandModel> getAllBrands(int offset, int limit) {
+    public List<BrandModel> getAllBrands(int offset, int limit,
+            String searchText) {
         List<BrandModel> brands = new ArrayList<>();
+        long totalCount = 0;
 
         String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
-            cs.setInt(1, 0);                  // p_Id
-            cs.setInt(2, limit);              // p_DisplayLength (Your limit)
-            cs.setInt(3, offset);             // p_DisplayStart (Your offset)
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search (NULL)
-            cs.setString(5, "BrandList");     // p_ListBy (REQUIRED)
-            cs.setInt(6, 0);                  // p_UserID
+            cs.setInt(1, 0); // p_Id
+            cs.setInt(2, limit); // p_DisplayLength (Your limit)
+            cs.setInt(3, offset); // p_DisplayStart (Your offset)
+            cs.setString(4, searchText); // p_Search
+            cs.setString(5, "BrandList"); // p_ListBy (REQUIRED)
+            cs.setInt(6, 0); // p_UserID
             cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
 
             try (ResultSet rs = cs.executeQuery()) {
                 while (rs.next()) {
-                    // Columns from the SP's 'BrandList' branch (b.BrandId, b.BrandTitle, c.CompanyName, b.IsActive)
+                    if (totalCount == 0) {
+                        try {
+                            totalCount = rs.getLong("TotalCount");
+                        } catch (SQLException ignored) {
+                        }
+                    }
+                    // Columns from the SP's 'BrandList' branch (b.BrandId, b.BrandTitle,
+                    // c.CompanyName, b.IsActive)
                     brands.add(BrandModel.builder()
                             .brandId(rs.getInt("BrandId"))
                             .brandTitle(rs.getString("BrandTitle"))
@@ -126,14 +138,16 @@ public class BrandDao {
 
     /**
      * Counts the total number of brand records for pagination.
+     * 
      * @return The total count of brands.
      */
     public int getBrandCount() {
         String sql = "SELECT COUNT(*) FROM TBLBrands";
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-            if (rs.next()) return rs.getInt(1);
+                Statement st = conn.createStatement();
+                ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next())
+                return rs.getInt(1);
         } catch (SQLException e) {
             System.err.println("Database error counting brands: " + e.getMessage());
         }
@@ -143,13 +157,14 @@ public class BrandDao {
     // --- DELETE Method (Completing the CRUD requirement) ---
     /**
      * Deletes a brand record from the TBLBrands table by ID.
+     * 
      * @param brandId The ID of the brand to delete.
      */
     public int deleteBrand(int brandId) {
         String sql = "{ CALL SP_IUD_Brand(?, ?, ?, ?, ?, ?, ?) }";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
+                CallableStatement cs = conn.prepareCall(sql)) {
 
             cs.setInt(1, brandId);
             cs.setNull(2, java.sql.Types.VARCHAR);

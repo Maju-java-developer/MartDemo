@@ -2,14 +2,15 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
-import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.CategoryDao;
 import raven.modal.demo.forms.FormCategory;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.JComponentUtils;
+import raven.modal.demo.utils.listeners.InputListenerConfiguration;
 import raven.modal.demo.utils.table.TableHeaderAlignment;
 import raven.swingpack.JPagination;
 
@@ -19,13 +20,14 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 @SystemForm(name = "Categories", description = "Manage product categories", tags = { "category", "table" })
-public class CategoryTablePanel extends Form implements TableActions {
+public class CategoryTablePanel extends Form implements TableActions, InputListenerConfiguration {
 
     private JTable table;
     private DefaultTableModel model;
     private CategoryDao categoryDao;
     private JPagination pagination;
     private JLabel lbTotal;
+    private JTextField txtSearch;
     private JButton btnCreate;
 
     public CategoryTablePanel() {
@@ -45,11 +47,17 @@ public class CategoryTablePanel extends Form implements TableActions {
         JPanel controlPanel = new JPanel(new MigLayout("fillx, insets 0", "[grow, fill]20[right]", ""));
         controlPanel.putClientProperty(FlatClientProperties.STYLE, "background:null;");
 
+        txtSearch = new JTextField();
+        txtSearch.putClientProperty(FlatClientProperties.PLACEHOLDER_TEXT, "Search Category...");
+        txtSearch.putClientProperty(FlatClientProperties.TEXT_FIELD_LEADING_ICON,
+                new com.formdev.flatlaf.extras.FlatSVGIcon("raven/modal/demo/icons/search.svg", 0.4f));
+
         btnCreate = new JButton("Create Category");
         btnCreate.putClientProperty(FlatClientProperties.STYLE,
                 "font:bold; background:$Component.accentColor; foreground:white");
         btnCreate.addActionListener(e -> openCategoryFormModal(0)); // Open modal in ADD mode
 
+        controlPanel.add(txtSearch, "w 200!");
         controlPanel.add(new JPanel(), "growx");
         controlPanel.add(btnCreate, "align right, w 150!, gapleft 10, gapright 10, gaptop 5, gapbottom 5");
         add(controlPanel, "gapx 20, gaptop 10");
@@ -101,6 +109,7 @@ public class CategoryTablePanel extends Form implements TableActions {
         pagePanel.add(lbTotal);
         pagePanel.add(pagination);
         add(pagePanel);
+        setupInputListener();
     }
 
     // --- MODAL DIALOG METHOD ---
@@ -117,7 +126,8 @@ public class CategoryTablePanel extends Form implements TableActions {
         int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
-        List<CategoryModel> categories = categoryDao.getAllCategories(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<CategoryModel> categories = categoryDao.getAllCategories(offset, limit, searchText);
         int totalCategories = categoryDao.getCategoryCount();
 
         for (CategoryModel categoryModel : categories) {
@@ -167,5 +177,17 @@ public class CategoryTablePanel extends Form implements TableActions {
                             }
                         })
         };
+    }
+
+    @Override
+    public void setupInputListener() {
+        // Listener for Detail Row Total Calculation
+        java.awt.event.KeyAdapter txtSearchListener = new java.awt.event.KeyAdapter() {
+            @Override
+            public void keyReleased(java.awt.event.KeyEvent e) {
+                loadCategories(1);
+            }
+        };
+        txtSearch.addKeyListener(txtSearchListener); // Search on Enter
     }
 }
