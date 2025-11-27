@@ -20,6 +20,35 @@ import java.util.List;
 public class SaleDao {
 
     /**
+     * Gets the quantity of a specific product sold in a specific sale.
+     * Used during editing to release the held stock.
+     * @param saleId The ID of the sale being edited.
+     * @param productId The ID of the product to check.
+     * @return The original quantity of the product in that sale (or 0.00 if not found).
+     */
+    public double getOriginalQuantityInSale(int saleId, int productId) {
+        // Assuming TBLSaleDetail has SaleID, ProductID, and Quantity
+        String sql = "SELECT Quantity FROM TBLSaleDetail WHERE SaleID = ? AND ProductID = ?";
+
+        try (Connection conn = MySQLConnection.getInstance().getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, saleId);
+            ps.setInt(2, productId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getDouble("Quantity");
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Database error retrieving original sale quantity: " + e.getMessage());
+        }
+        // Return 0.00 if the item wasn't found in the sale or on error
+        return 0.00;
+    }
+
+    /**
      * Serializes a list of SaleDetailModel objects into a JSON array string.
      */
     private String serializeDetailsToJson(List<SaleDetailModel> details) {

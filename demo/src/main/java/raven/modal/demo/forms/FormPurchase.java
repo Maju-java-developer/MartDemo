@@ -376,7 +376,7 @@ public class FormPurchase extends Form implements TableActions {
             int existingProductId = (int) detailModel.getValueAt(i, 6);
             if (existingProductId == newProductId) {
                 JOptionPane.showMessageDialog(this,
-                        "Product '" + selectedProduct.getProductName() + "' is already added in line " + (i + 1) + ". Please use the Action column to edit it.",
+                        "Product '" + selectedProduct.getProductName() + "' is already added in line " + (i + 1),
                         "Duplicate Item",
                         JOptionPane.WARNING_MESSAGE);
                 return; // Exit the method, preventing addition

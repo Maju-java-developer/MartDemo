@@ -5,6 +5,7 @@ import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.CustomerDao;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.SaleDao;
+import raven.modal.demo.dao.StockDao;
 import raven.modal.demo.model.CustomerModel;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.model.SaleDetailModel;
@@ -79,6 +80,7 @@ public class FormSale extends Form implements TableActions {
         init();
         loadInitialData();
         if (this.saleId > 0) {
+            formOpen();
             loadSaleData(this.saleId);
         }
     }
@@ -376,6 +378,20 @@ public class FormSale extends Form implements TableActions {
             return;
         }
 
+        // --- 1. CHECK FOR DUPLICATES ---
+        int newProductId = selectedProduct.getProductId();
+        for (int i = 0; i < detailModel.getRowCount(); i++) {
+            // We compare the hidden ProductID (column index 6)
+            int existingProductId = (int) detailModel.getValueAt(i, 7);
+            if (existingProductId == newProductId) {
+                JOptionPane.showMessageDialog(this,
+                        "Product '" + selectedProduct.getProductName() + "' is already added in line " + (i + 1),
+                        "Duplicate Item",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Exit the method, preventing addition
+            }
+        }
+
         // --- Input Validation and Calculation ---
         double cartons = 0, units = 0, unitPrice = 0, productDiscount = 0;
         try {
@@ -397,15 +413,6 @@ public class FormSale extends Form implements TableActions {
             return;
         }
 
-        // TODO: CRITICAL STOCK CHECK (Placeholder)
-        // double availableStock =
-        // saleDao.getAvailableStock(selectedProduct.getProductId());
-        // if (totalQuantity > availableStock) {
-        // JOptionPane.showMessageDialog(this, "Insufficient stock: Only " +
-        // availableStock + " available.", "Stock Error", JOptionPane.ERROR_MESSAGE);
-        // return;
-        // }
-
         int unitsPerCarton = selectedProduct.getUnitsPerCarton();
         double totalQuantity = (cartons * unitsPerCarton) + units;
 
@@ -421,6 +428,27 @@ public class FormSale extends Form implements TableActions {
                     "ProductDiscount cannot be greater than Total Amount.",
                     "Validation",
                     JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        int productId = selectedProduct.getProductId();
+        // Assuming you have an instance of StockDao available
+        StockDao stockDao = new StockDao();
+
+        // Step 1: Check Current Stock
+        double availableStock = stockDao.checkCurrentStock(productId);
+
+        // If Action is edit then get held qty from current sale for each product
+        if (saleId > 0)
+            availableStock = (availableStock + saleDao.getOriginalQuantityInSale(saleId, productId));
+
+        // Step 2: Perform Validation
+        if (totalQuantity <= 0) {
+            JOptionPane.showMessageDialog(this, "Quantity must be greater than zero.", "Validation Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        } else if (totalQuantity > availableStock) {
+            JOptionPane.showMessageDialog(this,
+                    String.format("Insufficient stock for this product! Available: %.2f", availableStock),
+                    "Stock Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
