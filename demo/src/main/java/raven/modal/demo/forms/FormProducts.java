@@ -7,12 +7,15 @@ import raven.modal.demo.dao.CategoryDao;
 import raven.modal.demo.dao.CompanyDao;
 import raven.modal.demo.dao.PackingTypeDao;
 import raven.modal.demo.dao.ProductDao;
+import raven.modal.demo.dao.UtilsDao;
+import raven.modal.demo.enums.ModelType;
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.model.CategoryModel;
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.model.PackingTypeModel;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.ComboBoxUtils;
 
@@ -84,15 +87,16 @@ public class FormProducts extends Form {
 
     private void loadInitialData() {
         // Load Company (triggers Brand update via listener)
-        List<CompanyModel> companies = companyDao.getActiveCompaniesForDropdown();
+        List<CompanyModel> companies = UtilsDao.getSpGetDropdownProcedure(Constants.getDefaultValue("Company"), ModelType.COMPANY.dropdown(), CompanyModel.class);
+//        List<CompanyModel> companies = companyDao.getActiveCompaniesForDropdown();
         cmbCompany.setModel(new DefaultComboBoxModel<>(companies.toArray(new CompanyModel[0])));
 
         // Load Category
-        List<CategoryModel> categories = categoryDao.getActiveCategoriesForDropdown();
+        List<CategoryModel> categories = UtilsDao.getSpGetDropdownProcedure("--- Select Category ---", ModelType.CATEGORY.dropdown(), CategoryModel.class);
         cmbCategory.setModel(new DefaultComboBoxModel<>(categories.toArray(new CategoryModel[0])));
 
         // Load PeekingType (adjust method name as per your DAO)
-        List<PackingTypeModel> types = peekingTypeDao.getActivePackingTypesForDropdown();
+        List<PackingTypeModel> types = UtilsDao.getSpGetDropdownProcedure("--- Select Packing Type ---", ModelType.PACKING_TYPE.dropdown(), PackingTypeModel.class);
         cmbPackingType.setModel(new DefaultComboBoxModel<>(types.toArray(new PackingTypeModel[0])));
 
         // Load Brand (initially loaded empty or with placeholder, updated by cmbCompany listener)
@@ -114,9 +118,8 @@ public class FormProducts extends Form {
     private void updateBrandDropdown(int companyIdToLoad) {
         List<BrandModel> brands;
         if (companyIdToLoad > 0) {
-            brands = brandDao.getBrandsByCompanyId(companyIdToLoad);
+            brands = UtilsDao.getSpGetDropdownProcedure("--- Select Brand ---", companyIdToLoad, ModelType.BRAND.dropdown(), BrandModel.class);
         } else {
-            // Load only a placeholder if no company is selected
             brands = Collections.singletonList(BrandModel.builder().brandId(0).brandTitle("--- Select Brand ---").build());
         }
         cmbBrand.setModel(new DefaultComboBoxModel<>(brands.toArray(new BrandModel[0])));

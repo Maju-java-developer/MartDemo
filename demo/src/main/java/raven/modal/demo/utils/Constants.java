@@ -114,4 +114,7 @@ public class Constants {
      */
     public static final int LIMIT_PER_PAGE = 10;
 
+    public static String getDefaultValue(String defaultValue) {
+        return defaultValue = defaultValue == null ? "" : "--- Select " + defaultValue + " ---";
+    }
 }

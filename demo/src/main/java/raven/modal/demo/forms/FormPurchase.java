@@ -2,6 +2,8 @@ package raven.modal.demo.forms;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.demo.dao.UtilsDao;
+import raven.modal.demo.enums.ModelType;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.PurchaseDao;
@@ -136,11 +138,11 @@ public class FormPurchase extends Form implements TableActions {
         setupInputListeners();
     }
 
-    // --- Initial Data Loading ---
-
     private void loadInitialData() {
         // Load Suppliers for Vendor dropdown
-        List<SupplierModel> suppliers = supplierDao.getActiveSuppliersForDropdown();
+        List<SupplierModel> suppliers = UtilsDao.getSpGetDropdownProcedure(Constants.getDefaultValue("Vendor"), ModelType.VENDOR.dropdown(), SupplierModel.class);
+
+//        List<SupplierModel> suppliers = supplierDao.getActiveSuppliersForDropdown();
         cmbVendor.setModel(new DefaultComboBoxModel<>(suppliers.toArray(new SupplierModel[0])));
         // Utility to render model objects by name
         ComboBoxUtils.setupComboBoxRenderer(cmbVendor, model -> ((SupplierModel)model).getSupplierName());

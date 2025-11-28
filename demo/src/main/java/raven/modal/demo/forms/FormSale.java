@@ -6,10 +6,13 @@ import raven.modal.demo.dao.CustomerDao;
 import raven.modal.demo.dao.ProductDao;
 import raven.modal.demo.dao.SaleDao;
 import raven.modal.demo.dao.StockDao;
+import raven.modal.demo.dao.UtilsDao;
+import raven.modal.demo.enums.ModelType;
 import raven.modal.demo.model.CustomerModel;
 import raven.modal.demo.model.ProductModel;
 import raven.modal.demo.model.SaleDetailModel;
 import raven.modal.demo.model.SaleModel;
+import raven.modal.demo.model.SupplierModel;
 import raven.modal.demo.system.Form;
 import raven.modal.demo.tables.ActionItem;
 import raven.modal.demo.tables.TableActionCellEditor;
@@ -257,11 +260,11 @@ public class FormSale extends Form implements TableActions {
         return panel;
     }
 
-    // --- Data and Table Setup ---
-
     private void loadInitialData() {
         // Load Customers for Customer dropdown
-        List<CustomerModel> customers = customerDao.getActiveCustomersForDropdown();
+        List<CustomerModel> customers = UtilsDao.getSpGetDropdownProcedure(Constants.getDefaultValue("Customer"), ModelType.CUSTOMER.dropdown(), CustomerModel.class);
+
+//        List<CustomerModel> customers = customerDao.getActiveCustomersForDropdown();
         cmbCustomer.setModel(new DefaultComboBoxModel<>(customers.toArray(new CustomerModel[0])));
         ComboBoxUtils.setupComboBoxRenderer(cmbCustomer, model -> ((CustomerModel) model).getCustomerName());
 

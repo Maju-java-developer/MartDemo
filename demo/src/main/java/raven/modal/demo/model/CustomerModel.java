@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import raven.modal.demo.annotations.DropdownField;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -12,7 +13,9 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CustomerModel extends AbstractModel{
+    @DropdownField(isId = true)
     private Integer customerId;
+    @DropdownField(isText = true)
     private String customerName;
     private String contactNo;
     private String address;

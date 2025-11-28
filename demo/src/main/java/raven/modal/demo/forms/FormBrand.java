@@ -4,9 +4,12 @@ import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
 import raven.modal.demo.dao.BrandDao;
 import raven.modal.demo.dao.CompanyDao;
+import raven.modal.demo.dao.UtilsDao;
+import raven.modal.demo.enums.ModelType;
 import raven.modal.demo.model.BrandModel;
 import raven.modal.demo.model.CompanyModel;
 import raven.modal.demo.system.Form;
+import raven.modal.demo.utils.Constants;
 import raven.modal.demo.utils.MessageUtils;
 import raven.modal.demo.utils.SystemForm;
 import raven.modal.demo.utils.combox.ComboBoxUtils;
@@ -75,7 +78,7 @@ public class FormBrand extends Form {
         cmbIsActive.setSelectedItem("Active");
 
         // --- Company Dropdown Setup ---
-        List<CompanyModel> companies = companyDao.getActiveCompaniesForDropdown();
+        List<CompanyModel> companies = UtilsDao.getSpGetDropdownProcedure(Constants.getDefaultValue("Company"), ModelType.COMPANY.dropdown(), CompanyModel.class);
         cmbCompany.setModel(new DefaultComboBoxModel<>(companies.toArray(new CompanyModel[0])));
 
         // Set up renderers for clarity (similarly to FormBrand)

@@ -67,37 +67,6 @@ public class CompanyDao {
         return company;
     }
 
-    public List<CompanyModel> getAllCompanies(int offset, int limit) {
-        List<CompanyModel> companies = new ArrayList<>();
-
-        String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-
-            cs.setInt(1, 0);                  // p_Id
-            cs.setInt(2, limit);              // p_DisplayLength
-            cs.setInt(3, offset);             // p_DisplayStart
-            cs.setNull(4, java.sql.Types.VARCHAR); // p_Search
-            cs.setString(5, "CompanyList");   // p_ListBy
-            cs.setInt(6, 0);                  // p_UserID
-            cs.setNull(7, java.sql.Types.TIMESTAMP); // p_DateTime
-
-            try (ResultSet rs = cs.executeQuery()) {
-                while (rs.next()) {
-                    companies.add(CompanyModel.builder()
-                            // Columns from the SP's 'CompanyList' branch
-                            .companyId(rs.getInt("CompanyID"))
-                            .companyName(rs.getString("CompanyName"))
-                            .isActive(rs.getBoolean("IsActive"))
-                            .build());
-                }
-            }
-        } catch (SQLException e) {
-            // ... error handling ...
-        }
-        return companies;
-    }
     // --- READ/FETCH Count (For Pagination) ---
     public int getCompanyCount() {
         String sql = "SELECT COUNT(*) FROM TBLCompanies c where c.IsActive = true ";
@@ -165,35 +134,5 @@ public class CompanyDao {
         return 0;
     }
 
-    // --- HELPER METHOD: Get Active Companies for Dropdown ---
-    /**
-     * Fetches only active Company IDs and Names to populate a JComboBox.
-     * 
-     * @return List of CompanyModel containing only ID and Name.
-     */
-    public List<CompanyModel> getActiveCompaniesForDropdown() {
-        // Assuming TBLCompanies has CompanyID, CompanyName, and IsActive columns
-        String sql = "SELECT CompanyID, CompanyName FROM TBLCompanies WHERE IsActive = TRUE ORDER BY CompanyName";
-        List<CompanyModel> companies = new ArrayList<>();
-
-        // Add a placeholder/default item for the dropdown
-        companies.add(CompanyModel.builder().companyId(0).companyName("--- Select Company ---").build());
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-                Statement st = conn.createStatement();
-                ResultSet rs = st.executeQuery(sql)) {
-
-            while (rs.next()) {
-                companies.add(CompanyModel.builder()
-                        .companyId(rs.getInt("CompanyID"))
-                        .companyName(rs.getString("CompanyName"))
-                        .build());
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error fetching active companies: " + e.getMessage());
-            // Optionally show a dialog, but often best to fail silently in helper methods
-        }
-        return companies;
-    }
 
 }

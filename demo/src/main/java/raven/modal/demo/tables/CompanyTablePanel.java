@@ -2,6 +2,7 @@ package raven.modal.demo.tables;
 
 import com.formdev.flatlaf.FlatClientProperties;
 import net.miginfocom.swing.MigLayout;
+import raven.modal.demo.enums.ModelType;
 import raven.modal.demo.utils.Constants;
 import raven.modal.demo.dao.CompanyDao;
 import raven.modal.demo.dao.UtilsDao;
@@ -145,7 +146,14 @@ public class CompanyTablePanel extends Form implements TableActions, InputListen
         int limit = Constants.LIMIT_PER_PAGE;
         int offset = (page - 1) * limit;
 
-        List<CompanyModel> companies = companyDao.getAllCompanies(offset, limit);
+        String searchText = txtSearch.getText().trim();
+        List<CompanyModel> companies = UtilsDao.getSpListProcedure(
+                ModelType.COMPANY.list(),
+                offset,
+                limit,
+                searchText,
+                CompanyModel.class
+        );
         int totalCompanies = UtilsDao.getCount("TBLCompanies");
 
         for (CompanyModel companyModel : companies) {

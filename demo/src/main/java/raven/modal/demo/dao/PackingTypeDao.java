@@ -155,31 +155,4 @@ public class PackingTypeDao {
         return 0;
     }
 
-    /**
-     * Fetches only active PeekingType IDs and Names to populate a JComboBox.
-     * Includes a placeholder item.
-     * @return List of PeekingTypeModel containing only ID and Name.
-     */
-    public List<PackingTypeModel> getActivePackingTypesForDropdown() {
-        String sql = "SELECT PackingTypeId, PackingTypeName FROM TBLPackingType WHERE IsActive = TRUE ORDER BY PackingTypeName";
-        List<PackingTypeModel> types = new ArrayList<>();
-
-        // Add a placeholder/default item
-        types.add(PackingTypeModel.builder().packingTypeId(0).packingTypeName("--- Select Packing Type ---").build());
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-
-            while (rs.next()) {
-                types.add(PackingTypeModel.builder()
-                        .packingTypeId(rs.getInt("PackingTypeId"))
-                        .packingTypeName(rs.getString("PackingTypeName"))
-                        .build());
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error fetching active peeking types: " + e.getMessage());
-        }
-        return types;
-    }
 }

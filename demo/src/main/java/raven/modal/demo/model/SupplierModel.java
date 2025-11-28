@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import raven.modal.demo.annotations.DropdownField;
 
 import java.time.LocalDateTime;
 
@@ -13,8 +14,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SupplierModel extends AbstractModel{
 
-    // --- Getters and Setters ---
+    @DropdownField(isId = true)
     private int supplierID;
+    @DropdownField(isText = true)
     private String supplierName;
     private String contactNo;
     private String address;

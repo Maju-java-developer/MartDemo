@@ -150,31 +150,4 @@ public class CategoryDao {
         return 0;
     }
 
-    /**
-     * Fetches only active Category IDs and Names to populate a JComboBox.
-     * Includes a placeholder item.
-     * @return List of CategoryModel containing only ID and Name.
-     */
-    public List<CategoryModel> getActiveCategoriesForDropdown() {
-        String sql = "SELECT CategoryID, CategoryName FROM TBLCategories WHERE IsActive = TRUE ORDER BY CategoryName";
-        List<CategoryModel> categories = new ArrayList<>();
-
-        // Add a placeholder/default item
-        categories.add(CategoryModel.builder().categoryId(0).categoryName("--- Select Category ---").build());
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-
-            while (rs.next()) {
-                categories.add(CategoryModel.builder()
-                        .categoryId(rs.getInt("CategoryID"))
-                        .categoryName(rs.getString("CategoryName"))
-                        .build());
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error fetching active categories: " + e.getMessage());
-        }
-        return categories;
-    }
 }

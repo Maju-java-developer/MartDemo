@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import lombok.EqualsAndHashCode;
+import raven.modal.demo.annotations.DropdownField;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -14,7 +15,9 @@ import lombok.EqualsAndHashCode;
 @Builder
 public class BrandModel extends AbstractModel {
 
+    @DropdownField(isId = true)
     private int brandId;
+    @DropdownField(isText = true)
     private String brandTitle;
     private int companyId;
     @Builder.Default
