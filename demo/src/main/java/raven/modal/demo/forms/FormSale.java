@@ -264,16 +264,9 @@ public class FormSale extends Form implements TableActions {
         // Load Customers for Customer dropdown
         List<CustomerModel> customers = UtilsDao.getSpGetDropdownProcedure(Constants.getDefaultValue("Customer"), ModelType.CUSTOMER.dropdown(), CustomerModel.class);
 
-//        List<CustomerModel> customers = customerDao.getActiveCustomersForDropdown();
         cmbCustomer.setModel(new DefaultComboBoxModel<>(customers.toArray(new CustomerModel[0])));
         ComboBoxUtils.setupComboBoxRenderer(cmbCustomer, model -> ((CustomerModel) model).getCustomerName());
-
         cmbDiscountType.setModel(new DefaultComboBoxModel<>(Constants.DISCOUNT_TYPES));
-
-//        // Load all products for the searchable combo box
-//        allProductsCache = productDao.getAllActiveProducts();
-        // The combo box model will be dynamically populated by
-        // performSearch/setupProductSearchCombo
     }
 
     private void setupDetailTableModel() {

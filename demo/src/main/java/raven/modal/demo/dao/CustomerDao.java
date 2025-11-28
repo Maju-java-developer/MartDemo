@@ -16,29 +16,6 @@ import java.util.List;
 
 public class CustomerDao {
 
-    public List<CustomerModel> getActiveCustomersForDropdown() {
-        String sql = "SELECT CustomerID, CustomerName FROM tblcustomers ORDER BY CustomerID";
-        List<CustomerModel> customers = new ArrayList<>();
-
-        // Add a placeholder/default item
-        customers.add(CustomerModel.builder().customerId(0).customerName("--- Select Customer ---").build());
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
-
-            while (rs.next()) {
-                customers.add(CustomerModel.builder()
-                        .customerId(rs.getInt("CustomerID"))
-                        .customerName(rs.getString("CustomerName"))
-                        .build());
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error fetching active Customer: " + e.getMessage());
-        }
-        return customers;
-    }
-
     public int addCustomer(CustomerModel c) {
         String sql = "{ CALL SP_IUD_Customer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
@@ -65,6 +42,7 @@ public class CustomerDao {
 
         return 0;
     }
+
     public int updateCustomer(CustomerModel c) {
         String sql = "{ CALL SP_IUD_Customer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
@@ -91,6 +69,7 @@ public class CustomerDao {
 
         return 0;
     }
+
     public int deleteCustomer(int customerId) {
         String sql = "{ CALL SP_IUD_Customer(?, ?, ?, ?, ?, ?, ?, ?, ?, ?) }";
 
@@ -122,14 +101,11 @@ public class CustomerDao {
     public List<CustomerModel> getAllCustomers(int offset, int limit, String searchText) {
         List<CustomerModel> customers = new ArrayList<>();
 
-        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
         String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-                // 🔴 CHANGE 2: Use CallableStatement
                 CallableStatement cs = conn.prepareCall(sql)) {
 
-            // --- Map SP Parameters ---
             cs.setInt(1, 0); // p_Id
             cs.setInt(2, limit); // p_DisplayLength (Your limit)
             cs.setInt(3, offset); // p_DisplayStart (Your offset)

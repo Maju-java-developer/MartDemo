@@ -47,38 +47,12 @@ public class SupplierDao {
         return suppliers;
     }
 
-    // ✅ Get suppliers with pagination
-    public List<SupplierModel> getActiveSuppliersForDropdown() {
-        String sql = "SELECT SupplierID, SupplierName FROM TBLSuppliers ORDER BY SupplierID";
-        List<SupplierModel> suppliers = new ArrayList<>();
-
-        // Add a placeholder/default item
-        suppliers.add(SupplierModel.builder().supplierID(0).supplierName("--- Select Vendor ---").build());
-
-        try (Connection conn = MySQLConnection.getInstance().getConnection();
-                Statement st = conn.createStatement();
-                ResultSet rs = st.executeQuery(sql)) {
-
-            while (rs.next()) {
-                suppliers.add(SupplierModel.builder()
-                        .supplierID(rs.getInt("SupplierID"))
-                        .supplierName(rs.getString("SupplierName"))
-                        .build());
-            }
-        } catch (SQLException e) {
-            System.err.println("Database error fetching active Supplier: " + e.getMessage());
-        }
-        return suppliers;
-    }
-
     public List<SupplierModel> getSuppliers(int offset, int limit, String searchText) {
         List<SupplierModel> list = new ArrayList<>();
 
-        // 🔴 CHANGE 1: Use the CALL syntax for the unified stored procedure
         String sql = "{CALL SP_GetList(?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = MySQLConnection.getInstance().getConnection();
-             // 🔴 CHANGE 2: Use CallableStatement
              CallableStatement cs = conn.prepareCall(sql)) {
 
             // --- Map SP Parameters ---
